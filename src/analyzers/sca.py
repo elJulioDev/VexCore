@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from ..domain import Category, FileInfo, Finding, Severity
 from ..ports import IAnalyzer
+from . import osv as osv_client
 
 # Nombres de archivos manifest que el analyzer sabe parsear.
 # Si un archivo no está en esta lista, se ignora inmediatamente
@@ -269,29 +270,36 @@ def _load_sca_rules(rules_dir: Path) -> list[ScaRule]:
 
 
 class ScaAnalyzer(IAnalyzer):
-    """Adaptador SCA: chequea manifests contra reglas de vulnerabilidades.
+    """Adaptador SCA: chequea manifests contra vulnerabilidades conocidas.
 
-    Flujo completo de analyze(file):
+    Soporta dos fuentes de datos:
+      - OSV.dev: base de datos en tiempo real con millones de CVEs
+      - Reglas locales: JSON manual (rules/sca/pypi.json)
+
+    La fuente se configura con el parámetro `source`:
+      - "both" (default): OSV primero, si falla o no encuentra, usa local
+      - "osv": solo OSV, ignora reglas locales
+      - "local": solo reglas locales (comportamiento original)
+
+    Flujo de analyze(file):
       1. Filtro rápido: si el nombre del archivo no está en
          _MANIFEST_NAMES, retorna [] — no es un manifest.
       2. Parsing: según el nombre, elige el parser adecuado y extrae
          pares (nombre_paquete, version).
-      3. Matching: por cada par, recorre todas las reglas:
-         - Si el nombre del paquete NO coincide con rule.package, salta
-         - Si coincide, evalúa _matches_constraint(version, rule.version_constraint)
-         - Si la versión cumple la restricción, genera un Finding
-      4. Retorna la lista de findings (vacía si no hay coincidencias).
+      3. Para cada par, según la fuente configurada:
+         - OSV: consulta api.osv.dev (con caché local de 24h)
+         - Local: recorre _rules y compara con _matches_constraint
+      4. Retorna la lista de findings.
 
     Diferencia fundamental con SAST/Secrets:
       - SAST busca PATRONES REGEX en cada línea → detecta malas prácticas
-        (ej: eval(), DEBUG=True)
       - SCA busca ESTRUCTURAS (nombre + versión) en manifests y las
-        compara contra una base de vulnerabilidades conocidas →
-        detecta dependencias con CVEs publicados
+        compara contra una base de vulnerabilidades conocidas
     """
 
-    def __init__(self, rules_dir: str | Path) -> None:
+    def __init__(self, rules_dir: str | Path, source: str = "both") -> None:
         self._rules = _load_sca_rules(Path(rules_dir))
+        self._source = source
 
     def analyze(self, file: FileInfo) -> list[Finding]:
         if file.absolute.name not in _MANIFEST_NAMES:
@@ -301,12 +309,34 @@ class ScaAnalyzer(IAnalyzer):
             return []
         findings: list[Finding] = []
         for pkg_name, pkg_version in pkgs:
-            for rule in self._rules:
-                if pkg_name != rule.package:
-                    continue
-                if _matches_constraint(pkg_version, rule.version_constraint):
-                    findings.append(
-                        Finding(
+            osv_findings: list[Finding] = []
+            local_findings: list[Finding] = []
+
+            if self._source in ("osv", "both"):
+                try:
+                    vulns = osv_client.query("PyPI", pkg_name, pkg_version)
+                except Exception:
+                    vulns = []
+                for ov in vulns:
+                    snippet = f"{pkg_name}=={pkg_version}"
+                    if ov.fixed:
+                        snippet += f" (fix: {ov.fixed})"
+                    osv_findings.append(Finding(
+                        rule_id=ov.id,
+                        title=ov.summary,
+                        severity=ov.severity,
+                        category=Category.SCA,
+                        file=file,
+                        line=1,
+                        snippet=snippet,
+                    ))
+
+            if self._source in ("local",) or (self._source == "both" and not osv_findings):
+                for rule in self._rules:
+                    if pkg_name != rule.package:
+                        continue
+                    if _matches_constraint(pkg_version, rule.version_constraint):
+                        local_findings.append(Finding(
                             rule_id=rule.id,
                             title=rule.title,
                             severity=rule.severity,
@@ -314,6 +344,8 @@ class ScaAnalyzer(IAnalyzer):
                             file=file,
                             line=1,
                             snippet=f"{pkg_name}=={pkg_version}",
-                        )
-                    )
+                        ))
+
+            findings.extend(osv_findings if osv_findings else local_findings)
+
         return findings
