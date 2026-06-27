@@ -55,7 +55,15 @@ def load_rules(rules_dir: Path, category: Category) -> list[Rule]:
     rules: list[Rule] = []
 
     for json_file in sorted(rules_dir.glob("*.json")):
-        raw = json.loads(json_file.read_text(encoding="utf-8"))
+        content = json_file.read_text(encoding="utf-8").strip()
+        if not content:
+            continue  # Salta archivos vacíos
+
+        try:
+            raw = json.loads(content)
+        except json.JSONDecodeError:
+            continue  # Salta JSONs malformados
+
         for r in raw:
             try:
                 rules.append(Rule(
@@ -67,7 +75,6 @@ def load_rules(rules_dir: Path, category: Category) -> list[Rule]:
                     pattern=re.compile(r["pattern"]),
                 ))
             except (KeyError, re.error):
-                # Regla malformada — se omite sin crashear
                 continue
 
     return rules
