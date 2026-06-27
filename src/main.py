@@ -40,6 +40,11 @@ def main() -> None:
         analyzers.append(SastAnalyzer(config.sast.rules_path))
     if config.secrets.enabled:
         analyzers.append(SecretsAnalyzer(config.secrets.rules_path))
+    # SCA: análisis de composición de dependencias.
+    # Deshabilitado por defecto en config.yaml (enabled: false).
+    # A diferencia de SAST/secrets que buscan en cada línea con regex,
+    # SCA parsea manifests (requirements.txt, pyproject.toml) y compara
+    # versiones contra una base de vulnerabilidades conocidas.
     if config.sca.enabled:
         analyzers.append(ScaAnalyzer(config.sca.rules_path))
 
