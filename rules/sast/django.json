@@ -1,0 +1,42 @@
+[
+  {
+    "id": "DJG001",
+    "title": "SQL crudo con interpolación",
+    "severity": "high",
+    "extensions": [".py"],
+    "pattern": "\\.raw\\s*\\(.*(%s|%d|\\.format\\(|f['\"])",
+    "description": "Uso de .raw() con formato de string — riesgo de SQLi"
+  },
+  {
+    "id": "DJG002",
+    "title": "DEBUG activo en settings",
+    "severity": "medium",
+    "extensions": [".py"],
+    "pattern": "^\\s*DEBUG\\s*=\\s*True",
+    "description": "Debug habilitado — expone stack traces en producción"
+  },
+  {
+    "id": "DJG003",
+    "title": "SECRET_KEY hardcodeado",
+    "severity": "critical",
+    "extensions": [".py"],
+    "pattern": "SECRET_KEY\\s*=\\s*['\"][^'\"]{8,}['\"]",
+    "description": "Clave secreta en texto plano"
+  },
+  {
+    "id": "DJG004",
+    "title": "Vista exenta de CSRF",
+    "severity": "medium",
+    "extensions": [".py"],
+    "pattern": "@csrf_exempt",
+    "description": "Decorator csrf_exempt desactiva protección CSRF"
+  },
+  {
+    "id": "DJG005",
+    "title": "Uso de eval()",
+    "severity": "high",
+    "extensions": [".py"],
+    "pattern": "\\beval\\s*\\(",
+    "description": "eval() con input no sanitizado ejecuta código arbitrario"
+  }
+]
