@@ -1,0 +1,72 @@
+[
+  {
+    "id": "PYA001",
+    "title": "Django < 3.2.25 — SQL injection",
+    "severity": "high",
+    "package": "django",
+    "version_constraint": "<3.2.25"
+  },
+  {
+    "id": "PYA002",
+    "title": "Django < 4.2.16 — SQL injection",
+    "severity": "high",
+    "package": "django",
+    "version_constraint": "<4.2.16"
+  },
+  {
+    "id": "PYA003",
+    "title": "Requests < 2.32.0 — CRLF injection",
+    "severity": "high",
+    "package": "requests",
+    "version_constraint": "<2.32.0"
+  },
+  {
+    "id": "PYA004",
+    "title": "Flask < 3.1.0 — info leak via error handlers",
+    "severity": "medium",
+    "package": "flask",
+    "version_constraint": "<3.1.0"
+  },
+  {
+    "id": "PYA005",
+    "title": "Urllib3 < 2.2.2 — request body injection",
+    "severity": "high",
+    "package": "urllib3",
+    "version_constraint": "<2.2.2"
+  },
+  {
+    "id": "PYA006",
+    "title": "Jinja2 < 3.1.5 — XSS via xmlattr filter",
+    "severity": "medium",
+    "package": "jinja2",
+    "version_constraint": "<3.1.5"
+  },
+  {
+    "id": "PYA007",
+    "title": "Pillow < 10.4.0 — buffer overflow via TIFF",
+    "severity": "high",
+    "package": "pillow",
+    "version_constraint": "<10.4.0"
+  },
+  {
+    "id": "PYA008",
+    "title": "FastAPI < 0.115.6 — path traversal in static files",
+    "severity": "high",
+    "package": "fastapi",
+    "version_constraint": "<0.115.6"
+  },
+  {
+    "id": "PYA009",
+    "title": "pyyaml < 6.0.2 — arbitrary code execution via full_load",
+    "severity": "critical",
+    "package": "pyyaml",
+    "version_constraint": "<6.0.2"
+  },
+  {
+    "id": "PYA010",
+    "title": "cryptography < 43.0.1 — denial of service via SSH",
+    "severity": "medium",
+    "package": "cryptography",
+    "version_constraint": "<43.0.1"
+  }
+]
