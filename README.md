@@ -19,7 +19,7 @@ PHP, y detección de dependencias Python con versiones vulnerables.
 - **Detección de Secretos:** 14 patrones globales (AWS keys, GitHub tokens,
   Slack webhooks, JWT secrets, Stripe, etc.).
 - **Soporte Multi-Lenguaje:**
-  - **Django (Python):** SQL crudo, `eval()`, `DEBUG=True`, `SECRET_KEY` expuestas.
+  - **Python/Django:** SQL crudo, `eval()`, `DEBUG=True`, `SECRET_KEY` expuestas.
   - **JavaScript/React:** `dangerouslySetInnerHTML`, inyecciones al DOM,
     credenciales hardcodeadas.
   - **PHP:** LFI/RFI, inyección de comandos, SQLi por concatenación,
@@ -90,39 +90,100 @@ analyzers:
     enabled: true
     rules_path: rules/secrets
   sca:
-    enabled: false
+    enabled: false       # Cambiar a true para activar SCA
     rules_path: rules/sca
 
 output:
   severity_threshold: low
 ```
 
+El análisis SCA está deshabilitado por defecto. Para activarlo, cambia
+`sca.enabled: false` a `sca.enabled: true` en `config.yaml`. Así se
+escanearán los archivos `requirements.txt` y `pyproject.toml` en busca
+de dependencias con versiones vulnerables.
+
+## Reglas
+
+### Formato de reglas SAST y Secrets
+
+```json
+{
+  "id": "DJG001",
+  "title": "SQL crudo con interpolación",
+  "severity": "high",
+  "extensions": [".py"],
+  "pattern": "\\\\.raw\\\\s*\\\\(.*(%s|%d|\\\\.format\\\\(|f['\\\"])"
+}
+```
+
+| Campo | Descripción |
+|-------|-------------|
+| `id` | Identificador único (prefijo por lenguaje) |
+| `title` | Descripción corta de la vulnerabilidad |
+| `severity` | critical, high, medium, low, info |
+| `extensions` | Extensiones donde aplica (vacío = todos los archivos) |
+| `pattern` | Expresión regular Python a buscar en cada línea |
+
+### Formato de reglas SCA
+
+```json
+{
+  "id": "PYA001",
+  "title": "Django < 3.2.25 — SQL injection",
+  "severity": "high",
+  "package": "django",
+  "version_constraint": "<3.2.25"
+}
+```
+
+A diferencia de SAST, SCA no busca patrones en el código sino que
+compara la **versión** de cada dependencia extraída del manifest contra
+una restricción semántica (`<3.2.25`, `>=1.0,<2.0`, etc.).
+
+### Reglas disponibles
+
+| Archivo | ID | Cantidad | Categoría |
+|---------|----|----------|-----------|
+| `rules/sast/django.json` | DJG001–005 | 5 | SAST Python/Django |
+| `rules/sast/php.json` | PHP001–007 | 7 | SAST PHP |
+| `rules/sast/js.json` | JS001–006 | 6 | SAST JavaScript/React |
+| `rules/secrets/generic.json` | SEC001–014 | 14 | Secretos (agnóstico) |
+| `rules/sca/pypi.json` | PYA001–010 | 10 | SCA PyPI |
+
+Ver documentación detallada con ejemplos de código vulnerable y cómo
+corregirlo en:
+
+- [`docs/python.md`](docs/python.md) — reglas Python (DJG + PYA)
+- [`docs/php.md`](docs/php.md) — reglas PHP y JS (para tu compañero)
+
 ## Estructura del Proyecto
 
-```text
+```
 vexcore/
 ├── config.yaml             # Configuración principal
 ├── pyproject.toml          # Metadatos y dependencias
+├── docs/                   # Documentación detallada de reglas
+│   ├── python.md           #   Reglas Python (SAST + SCA)
+│   └── php.md              #   Reglas PHP y JS
 ├── rules/                  # Reglas en formato JSON
-│   ├── sast/               # django.json, js.json, php.json
-│   ├── secrets/            # generic.json (14 patrones)
-│   └── sca/                # pypi.json (10 reglas SCA)
-├── src/
-│   ├── analyzers/          # Motores de análisis
-│   │   ├── _base.py        # Engine regex compartido
-│   │   ├── sast.py         # Adaptador SAST
-│   │   ├── secrets.py      # Adaptador de secretos
-│   │   └── sca.py          # Adaptador SCA (PyPI)
-│   ├── reporters/          # Salida de resultados
-│   │   └── console.py      # Reporte con colores ANSI
-│   ├── utils/              # Utilidades
-│   │   └── config_loader.py # Carga de config.yaml
-│   ├── crawler.py          # Recorrido del sistema de archivos
-│   ├── domain.py           # Entidades de negocio
-│   ├── engine.py           # Orquestador
-│   ├── main.py             # Punto de entrada CLI
-│   └── ports.py            # Puertos (IAnalyzer, IReporter)
-└── AGENTS.md               # Guía para asistentes IA
+│   ├── sast/               #   django.json, js.json, php.json
+│   ├── secrets/            #   generic.json (14 patrones)
+│   └── sca/                #   pypi.json (10 reglas SCA)
+└── src/
+    ├── analyzers/          # Motores de análisis
+    │   ├── _base.py        #   Engine regex compartido
+    │   ├── sast.py         #   Adaptador SAST
+    │   ├── secrets.py      #   Adaptador de secretos
+    │   └── sca.py          #   Adaptador SCA (PyPI)
+    ├── reporters/          # Salida de resultados
+    │   └── console.py      #   Reporte con colores ANSI
+    ├── utils/              # Utilidades
+    │   └── config_loader.py#   Carga de config.yaml
+    ├── crawler.py          # Recorrido del sistema de archivos
+    ├── domain.py           # Entidades de negocio
+    ├── engine.py           # Orquestador
+    ├── main.py             # Punto de entrada CLI
+    └── ports.py            # Puertos (IAnalyzer, IReporter)
 ```
 
 ## Dependencias
