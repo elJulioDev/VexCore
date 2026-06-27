@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
+from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
 from textual.screen import Screen
@@ -64,9 +65,15 @@ class MainScreen(Screen):
 
     def _render_findings(self, detail_idx: int | None = None) -> None:
         if not self._filtered:
-            self.query_one("#findings-list", Static).update(
-                "[dim]  Sin hallazgos[/]" if self._scanned_files else "[dim]  Presiona [bold]s[/] para escanear[/]"
-            )
+            if self._scanned_files:
+                self.query_one("#findings-list", Static).update(
+                    "[green]✅[/] No se encontraron hallazgos para este filtro.\n"
+                    "  [dim]Presiona [bold]s[/] para re-escanear  |  [bold]Esc[/] para limpiar filtro[/]"
+                )
+            else:
+                self.query_one("#findings-list", Static).update(
+                    "[dim]  Presiona [bold]s[/] para escanear[/]"
+                )
             self._update_footer()
             return
 
@@ -77,8 +84,10 @@ class MainScreen(Screen):
         lines: list[str] = []
         idx = 0
         for file_path in sorted(groups):
-            lines.append(f"\n[bold]{file_path}[/]")
-            for f in groups[file_path]:
+            g = groups[file_path]
+            n = len(g)
+            lines.append(f"\n[bold]{file_path}[/]  [dim]({n} hallazgo{'s' if n != 1 else ''})[/]")
+            for f in g:
                 color = _SEVERITY_COLORS.get(f.severity, "white")
                 badge = f"[{color}]{f.severity.upper()[:5]:>5}[/]"
                 marker = "[bold #ff6b6f]▸[/]" if idx == self._selected else " "
@@ -116,14 +125,15 @@ class MainScreen(Screen):
         self._selected = min(self._selected, max(len(self._filtered) - 1, 0))
         self._render_findings()
 
+    @work(exclusive=True, thread=True)
     def _do_scan(self) -> None:
         target = self._target or Path.cwd()
         if not target.is_dir():
             self._update_header(f"[red]Directorio inválido: {target}[/]")
             return
 
-        self._update_header("Escaneando...")
-        self.query_one("#findings-list", Static).update("[dim]  Escaneando...[/]")
+        self._update_header("⏳ Escaneando...")
+        self.query_one("#findings-list", Static).update("[yellow]⏳ Escaneando...[/]")
 
         try:
             config = load_config()
