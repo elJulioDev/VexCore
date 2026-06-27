@@ -54,5 +54,53 @@
     "extensions": [".php"],
     "pattern": "\\becho\\s+\\$_(GET|POST|REQUEST|COOKIE)",
     "description": "Output de input sin escapar — riesgo de XSS reflejado"
+  },
+  {
+    "id": "PHP008",
+    "title": "Inyección de Objetos PHP (unserialize)",
+    "severity": "critical",
+    "extensions": [".php"],
+    "pattern": "\\bunserialize\\s*\\(\\s*\\$_(GET|POST|REQUEST|COOKIE)",
+    "description": "unserialize() con input de usuario permite ejecución remota de código (RCE)"
+  },
+  {
+    "id": "PHP009",
+    "title": "Open Redirect / Header Injection",
+    "severity": "medium",
+    "extensions": [".php"],
+    "pattern": "\\bheader\\s*\\(\\s*['\"]Location:.*\\$_(GET|POST|REQUEST)",
+    "description": "Redirección abierta basada en input de usuario no validado"
+  },
+  {
+    "id": "PHP010",
+    "title": "XXE (XML External Entity)",
+    "severity": "high",
+    "extensions": [".php"],
+    "pattern": "\\b(simplexml_load_string|simplexml_load_file|DOMDocument::loadXML)\\s*\\(",
+    "description": "Carga de XML potencialmente vulnerable a XXE si no se usan configuraciones seguras como libxml_disable_entity_loader"
+  },
+  {
+    "id": "PHP011",
+    "title": "Ejecución de código vía preg_replace /e",
+    "severity": "critical",
+    "extensions": [".php"],
+    "pattern": "preg_replace\\s*\\(.*['\"].*/e['\"]",
+    "description": "Uso del modificador /e en preg_replace ejecuta código PHP (RCE)"
+  },
+  {
+    "id": "PHP012",
+    "title": "Path Traversal / LFI en lectura de archivos",
+    "severity": "high",
+    "extensions": [".php"],
+    "pattern": "\\b(file_get_contents|readfile|fopen|readlink)\\s*\\(\\s*\\$_(GET|POST|REQUEST|COOKIE)",
+    "description": "Funciones de lectura de archivos con input externo sin sanitizar"
+  },
+  {
+    "id": "PHP013",
+    "title": "Session Fixation o Secuestro en código",
+    "severity": "medium",
+    "extensions": [".php"],
+    "pattern": "\\bsession_id\\s*\\(\\s*\\$_(GET|POST|REQUEST)",
+    "description": "Se establece el ID de sesión usando un valor proveído por el usuario"
   }
 ]
