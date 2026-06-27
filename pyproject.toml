@@ -5,7 +5,9 @@ description = "Escáner estático de seguridad modular."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "pyfiglet>=1.0.4",
     "pyyaml>=6.0.3",
+    "textual>=8.2.7",
 ]
 
 [project.scripts]
