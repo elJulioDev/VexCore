@@ -5,6 +5,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Generator, Iterable, Set
+from .domain import FileInfo
 
 # Sobreescribibles desde config.yaml
 DEFAULT_IGNORE_DIRS: frozenset[str] = frozenset({
@@ -27,14 +28,6 @@ DEFAULT_SCAN_EXTENSIONS: frozenset[str] = frozenset({
 })
 
 MAX_FILE_SIZE_BYTES: int = 5 * 1024 * 1024  # 5 MB — descarta binarios disfrazados
-
-@dataclass(frozen=True, slots=True)
-class FileInfo:
-    """Snapshot inmutable de un archivo listo para analizar."""
-    absolute: Path
-    relative: Path
-    extension: str
-    size_bytes: int
 
 class Crawler:
     """Recorre un directorio y emite FileInfo de forma lazy."""
