@@ -1,13 +1,26 @@
+/* =============================================
+   VexCore TUI — Hoja de estilos (Textual CSS)
+   Textual usa sintaxis CSS para dar estilo a los
+   widgets. $surface, $primary, etc. son variables
+   de color del tema activo (se adaptan a modo
+   claro y oscuro automáticamente).
+   ============================================= */
+
+/* --- Pantalla base --- */
 Screen {
     background: $surface;
 }
 
+/* ======= Splash Screen ======= */
+
+/* Contenedor principal: centra el logo vertical y horizontalmente */
 #splash {
     align: center middle;
     width: 100%;
     height: 100%;
 }
 
+/* Logo grande de VEXCORE (pyfiglet) en negrita */
 #logo {
     text-style: bold;
     min-height: 6;
@@ -15,6 +28,7 @@ Screen {
     content-align: center middle;
 }
 
+/* Tagline y versión debajo del logo */
 #tagline, #version {
     color: $text-muted;
     text-style: italic;
@@ -22,12 +36,16 @@ Screen {
     content-align: center middle;
 }
 
+/* Mensaje "presiona tecla o espera" */
 #prompt {
     color: $text;
     height: 3;
     content-align: center middle;
 }
 
+/* ======= Main Screen ======= */
+
+/* Logo pequeño arriba del input */
 #logo-small {
     text-style: bold;
     min-height: 4;
@@ -36,30 +54,37 @@ Screen {
     color: $accent;
 }
 
+/* Fila que contiene Input + Botón */
 #input-row {
     height: 5;
     margin: 0 2;
 }
 
+/* Input de ruta: 1fr = ocupa todo el espacio disponible */
 #path-input {
     width: 1fr;
 }
 
+/* Botón escanear: ancho fijo, separado del input */
 #scan-btn {
     width: 22;
     margin-left: 1;
 }
 
+/* Barra de progreso: visible solo durante el escaneo */
 #progress {
     margin: 0 2 1 2;
 }
 
+/* ======= Tabla de resultados ======= */
+
 #results-table {
-    height: 1fr;
+    height: 1fr;     /* ocupa todo el espacio vertical restante */
     margin: 0 2;
     border: solid $primary;
 }
 
+/* Clases de severidad para colorear las filas */
 .critical {
     color: $error;
     text-style: bold;
@@ -77,6 +102,9 @@ Screen {
     color: $secondary;
 }
 
+/* ======= Panel de detalle ======= */
+
+/* Oculto por defecto; se muestra al agregar clase .visible */
 #detail-panel {
     height: auto;
     max-height: 10;
@@ -87,9 +115,12 @@ Screen {
     display: none;
 }
 
+/* Toggle desde Python con add_class("visible") / remove_class("visible") */
 #detail-panel.visible {
     display: block;
 }
+
+/* ======= Header y Footer ======= */
 
 Header {
     background: $primary;
