@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from .analyzers import SastAnalyzer, SecretsAnalyzer
+from .analyzers import SastAnalyzer, ScaAnalyzer, SecretsAnalyzer
 from .domain import Severity
 from .engine import Engine
 from .reporters.console import ConsoleReporter
@@ -40,6 +40,8 @@ def main() -> None:
         analyzers.append(SastAnalyzer(config.sast.rules_path))
     if config.secrets.enabled:
         analyzers.append(SecretsAnalyzer(config.secrets.rules_path))
+    if config.sca.enabled:
+        analyzers.append(ScaAnalyzer(config.sca.rules_path))
 
     threshold = Severity(args.severity) if args.severity else config.severity_threshold
     report    = Engine(config, analyzers).run(args.target)
