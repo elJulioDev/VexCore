@@ -1,12 +1,16 @@
 [project]
 name = "vexcore"
 version = "0.1.0"
-description = "Add your description here"
+description = "Escáner estático de seguridad modular."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0.3",
-    "requests>=2.34.2",
-    "rich>=15.0.0",
-    "textual>=8.2.7",
 ]
+
+[project.scripts]
+vexcore = "src.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
