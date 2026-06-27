@@ -1,0 +1,45 @@
+crawler:
+  ignore_dirs:
+    - .git
+    - __pycache__
+    - venv
+    - .venv
+    - env
+    - node_modules
+    - dist
+    - build
+    - vendor
+    - .idea
+    - .vscode
+    - migrations
+  scan_extensions:
+    - .py
+    - .php
+    - .html
+    - .js
+    - .ts
+    - .env
+    - .yaml
+    - .yml
+    - .json
+    - .toml
+    - .sh
+    - .txt
+    - .lock
+    - .xml
+  max_file_size_mb: 5
+  follow_symlinks: false
+
+analyzers:
+  sast:
+    enabled: true
+    rules_path: rules/sast
+  secrets:
+    enabled: true
+    rules_path: rules/secrets
+  sca:
+    enabled: false
+    rules_path: rules/sca
+
+output:
+  severity_threshold: low
