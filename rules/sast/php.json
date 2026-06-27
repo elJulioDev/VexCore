@@ -1,0 +1,58 @@
+[
+  {
+    "id": "PHP001",
+    "title": "SQL injection por concatenación",
+    "severity": "critical",
+    "extensions": [".php"],
+    "pattern": "[\"']\\s*\\.\\s*\\$_(GET|POST|REQUEST|COOKIE)",
+    "description": "Concatenación directa de input en query SQL"
+  },
+  {
+    "id": "PHP002",
+    "title": "Uso de eval()",
+    "severity": "high",
+    "extensions": [".php"],
+    "pattern": "\\beval\\s*\\(",
+    "description": "eval() con input no sanitizado ejecuta código arbitrario"
+  },
+  {
+    "id": "PHP003",
+    "title": "Inclusión de archivo con input de usuario",
+    "severity": "critical",
+    "extensions": [".php"],
+    "pattern": "(?:include|require)(?:_once)?\\s*\\(\\s*\\$_(GET|POST|REQUEST|COOKIE)",
+    "description": "LFI/RFI — include con variable de usuario sin validar"
+  },
+  {
+    "id": "PHP004",
+    "title": "Inyección de comandos del sistema",
+    "severity": "critical",
+    "extensions": [".php"],
+    "pattern": "\\b(exec|system|shell_exec|passthru|proc_open|popen)\\s*\\(.*\\$_(GET|POST|REQUEST|COOKIE)",
+    "description": "Función de OS con input de usuario sin sanitizar"
+  },
+  {
+    "id": "PHP005",
+    "title": "Hash débil para contraseñas",
+    "severity": "medium",
+    "extensions": [".php"],
+    "pattern": "\\b(md5|sha1)\\s*\\(",
+    "description": "MD5/SHA1 son inseguros para hashing de contraseñas — usar password_hash()"
+  },
+  {
+    "id": "PHP006",
+    "title": "extract() con input de usuario",
+    "severity": "high",
+    "extensions": [".php"],
+    "pattern": "\\bextract\\s*\\(\\s*\\$_(GET|POST|REQUEST|COOKIE)",
+    "description": "extract() sobreescribe variables del scope con input externo"
+  },
+  {
+    "id": "PHP007",
+    "title": "XSS via echo directo",
+    "severity": "high",
+    "extensions": [".php"],
+    "pattern": "\\becho\\s+\\$_(GET|POST|REQUEST|COOKIE)",
+    "description": "Output de input sin escapar — riesgo de XSS reflejado"
+  }
+]

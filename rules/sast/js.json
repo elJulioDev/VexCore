@@ -1,0 +1,50 @@
+[
+  {
+    "id": "JS001",
+    "title": "dangerouslySetInnerHTML en React",
+    "severity": "high",
+    "extensions": [".jsx", ".tsx", ".js", ".ts"],
+    "pattern": "dangerouslySetInnerHTML\\s*=\\s*\\{",
+    "description": "Inyección de HTML sin sanitizar — vector XSS en React"
+  },
+  {
+    "id": "JS002",
+    "title": "Uso de eval()",
+    "severity": "high",
+    "extensions": [".js", ".ts", ".jsx", ".tsx"],
+    "pattern": "\\beval\\s*\\(",
+    "description": "eval() ejecuta strings como código — evitar siempre"
+  },
+  {
+    "id": "JS003",
+    "title": "document.write()",
+    "severity": "medium",
+    "extensions": [".js", ".ts", ".jsx", ".tsx", ".html", ".htm"],
+    "pattern": "document\\.write\\s*\\(",
+    "description": "document.write() puede reemplazar el DOM completo e introducir XSS"
+  },
+  {
+    "id": "JS004",
+    "title": "Asignación directa a innerHTML",
+    "severity": "high",
+    "extensions": [".js", ".ts", ".jsx", ".tsx", ".html", ".htm"],
+    "pattern": "\\.innerHTML\\s*=",
+    "description": "innerHTML sin sanitizar es vector de XSS DOM"
+  },
+  {
+    "id": "JS005",
+    "title": "setTimeout/setInterval con string",
+    "severity": "medium",
+    "extensions": [".js", ".ts", ".jsx", ".tsx"],
+    "pattern": "(setTimeout|setInterval)\\s*\\(\\s*[\"'`]",
+    "description": "Pasar strings a timers equivale a eval() implícito"
+  },
+  {
+    "id": "JS006",
+    "title": "Token o clave hardcodeada en JS",
+    "severity": "high",
+    "extensions": [".js", ".ts", ".jsx", ".tsx"],
+    "pattern": "(?i)(api_key|apikey|token|secret)\\s*[=:]\\s*[\"'`][a-zA-Z0-9_\\-]{16,}[\"'`]",
+    "description": "Credencial expuesta en código frontend — visible al cliente"
+  }
+]
