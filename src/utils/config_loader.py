@@ -20,6 +20,7 @@ class CrawlerConfig:
 class AnalyzerConfig:
     enabled:    bool
     rules_path: Path
+    source:     str = "both"
 
 @dataclass
 class AppConfig:
@@ -68,4 +69,5 @@ def _parse_analyzer(
     return AnalyzerConfig(
         enabled=section.get("enabled", default_enabled),
         rules_path=Path(section.get("rules_path", default_path)),
+        source=section.get("source", "both"),
     )

@@ -14,8 +14,9 @@ PHP, y detección de dependencias Python con versiones vulnerables.
 - **Arquitectura Hexagonal (Ports & Adapters):** Lógica de dominio pura
   (`domain.py`) aislada de detalles de infraestructura.
 - **Análisis SAST:** Evaluador basado en reglas regex definidas en JSON.
-- **Análisis SCA:** Detección de dependencias Python con versiones vulnerables
-  mediante comparación semántica de versiones.
+- **Análisis SCA:** Detección de dependencias Python con versiones vulnerables.
+  Soporta reglas locales y consulta en tiempo real a [OSV.dev](https://osv.dev)
+  (Google) con caché local de 24h.
 - **Detección de Secretos:** 14 patrones globales (AWS keys, GitHub tokens,
   Slack webhooks, JWT secrets, Stripe, etc.).
 - **Soporte Multi-Lenguaje:**
@@ -92,6 +93,7 @@ analyzers:
   sca:
     enabled: false       # Cambiar a true para activar SCA
     rules_path: rules/sca
+    source: both         # both (OSV+local), osv (solo API), local (solo JSON)
 
 output:
   severity_threshold: low
@@ -101,6 +103,13 @@ El análisis SCA está deshabilitado por defecto. Para activarlo, cambia
 `sca.enabled: false` a `sca.enabled: true` en `config.yaml`. Así se
 escanearán los archivos `requirements.txt` y `pyproject.toml` en busca
 de dependencias con versiones vulnerables.
+
+La fuente de datos se configura con `source`:
+
+- **both** (default): consulta [OSV.dev](https://osv.dev) primero,
+  si falla la conexión usa las reglas locales (`rules/sca/`)
+- **osv**: solo consulta online, ignora reglas locales
+- **local**: solo reglas locales, sin conexión a internet
 
 ## Reglas
 
@@ -169,9 +178,10 @@ vexcore/
 │   ├── sast/               #   django.json, js.json, php.json
 │   ├── secrets/            #   generic.json (14 patrones)
 │   └── sca/                #   pypi.json (10 reglas SCA)
-└── src/
+    └── src/
     ├── analyzers/          # Motores de análisis
     │   ├── _base.py        #   Engine regex compartido
+    │   ├── osv.py          #   Cliente OSV.dev (cache + API)
     │   ├── sast.py         #   Adaptador SAST
     │   ├── secrets.py      #   Adaptador de secretos
     │   └── sca.py          #   Adaptador SCA (PyPI)

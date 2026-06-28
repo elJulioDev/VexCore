@@ -40,6 +40,7 @@ analyzers:
   sca:
     enabled: false
     rules_path: rules/sca
+    source: both       # both, osv, o local
 
 output:
   severity_threshold: low

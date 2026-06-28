@@ -60,7 +60,7 @@ def main() -> None:
     # SCA parsea manifests (requirements.txt, pyproject.toml) y compara
     # versiones contra una base de vulnerabilidades conocidas.
     if config.sca.enabled:
-        analyzers.append(ScaAnalyzer(config.sca.rules_path))
+        analyzers.append(ScaAnalyzer(config.sca.rules_path, source=config.sca.source))
 
     threshold = Severity(args.severity) if args.severity else config.severity_threshold
     report    = Engine(config, analyzers).run(args.target)
