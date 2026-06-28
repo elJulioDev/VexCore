@@ -1,0 +1,37 @@
+/* Terminal-native TUI styles — compact, no frills */
+
+Screen {
+    background: $surface;
+}
+
+/* === Header === */
+Header {
+    background: $primary;
+    color: $text;
+}
+
+/* === Header bar (project info + stats) === */
+#header-bar {
+    height: 1;
+    padding: 0 1;
+    color: $text;
+    background: $panel;
+}
+
+/* === Findings list (body) === */
+#scroll {
+    height: 1fr;
+}
+
+#findings-list {
+    padding: 0 1;
+    color: $text;
+}
+
+/* === Footer (keybinding help) === */
+#footer-bar {
+    height: 1;
+    padding: 0 1;
+    background: $panel;
+    color: $text-muted;
+}
