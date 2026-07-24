@@ -1,6 +1,7 @@
 """domain.py — Entidades núcleo de VexCore. Sin dependencias externas."""
 
 from __future__ import annotations
+import re
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
@@ -30,6 +31,15 @@ def severity_index(s: Severity) -> int:
 def meets_threshold(severity: Severity, threshold: Severity) -> bool:
     """True si severity es igual o más grave que threshold."""
     return severity_index(severity) <= severity_index(threshold)
+
+@dataclass(frozen=True, slots=True)
+class Rule:
+    id:         str
+    title:      str
+    severity:   Severity
+    category:   Category
+    extensions: frozenset[str]
+    pattern:    re.Pattern
 
 @dataclass(frozen=True, slots=True)
 class FileInfo:

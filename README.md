@@ -180,7 +180,8 @@ vexcore/
 │   └── sca/                #   pypi.json (10 reglas SCA)
     └── src/
     ├── analyzers/          # Motores de análisis
-    │   ├── _base.py        #   Engine regex compartido
+    │   ├── _loader.py      #   Carga de reglas JSON
+    │   ├── _regex.py       #   Engine regex compartido
     │   ├── osv.py          #   Cliente OSV.dev (cache + API)
     │   ├── sast.py         #   Adaptador SAST
     │   ├── secrets.py      #   Adaptador de secretos

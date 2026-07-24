@@ -230,7 +230,7 @@ def _parse_manifest(file: FileInfo) -> list[tuple[str, str]]:
 def _load_sca_rules(rules_dir: Path) -> list[ScaRule]:
     """Carga reglas SCA desde archivos JSON en rules_dir.
 
-    Diferencia crucial con load_rules de _base.py (SAST/Secrets):
+    Diferencia crucial con load_rules de _loader.py (SAST/Secrets):
       - SAST usa reglas con 'pattern' (regex) para buscar en cada línea
       - SCA usa reglas con 'package' + 'version_constraint' para
         comparar contra pares (nombre, versión) extraídos del manifest
