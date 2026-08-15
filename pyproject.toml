@@ -9,6 +9,11 @@ dependencies = [
     "textual>=8.2.7",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
 [project.scripts]
 vexcore = "src.main:main"
 

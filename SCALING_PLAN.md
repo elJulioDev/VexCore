@@ -6,19 +6,21 @@
 
 ---
 
-## Fase 1 — Fundación [ ]
+## Fase 1 — Fundación [X]
 
 Sin nuevas dependencias. Solo stdlib.
 
-- [ ] **Paralelismo en engine.py** — `concurrent.futures.ThreadPoolExecutor` en el loop de archivos
-- [ ] **Paralelizar OSV queries** — `ThreadPoolExecutor` en `sca.py` para HTTP requests
-- [ ] **Streaming en engine** — yield incremental de findings en vez de lista acumulada
-- [ ] **Reporter JSON** — `reporters/json.py`. Flag `--output json`
-- [ ] **Reporter SARIF** — `reporters/sarif.py`. Formato GitHub Code Scanning
-- [ ] **Exit code** — `sys.exit(1)` si hay findings >= threshold. Flag `--fail-on`
-- [ ] **`--no-color`** flag + auto-detect `NO_COLOR` env var
-- [ ] **Suppressions** — `.vexcoreignore` con rule IDs o file patterns
-- [ ] **Tests básicos** — pytest sobre domain, regex analyzer, config loader, crawler
+- [x] **Paralelismo en engine.py** — `concurrent.futures.ThreadPoolExecutor` en el loop de archivos
+- [x] **Paralelizar OSV queries** — `ThreadPoolExecutor` en `sca.py` para HTTP requests
+- [x] **Streaming en engine** — `pool.map` perezoso: findings entran al report según terminan
+- [x] **Reporter JSON** — `reporters/json.py`. Flag `--output json`
+- [x] **Reporter SARIF** — `reporters/sarif.py`. Formato GitHub Code Scanning
+- [x] **Exit code** — `sys.exit(1)` si hay findings >= threshold. Flag `--fail-on`
+- [x] **`--no-color`** flag + auto-detect `NO_COLOR` env var
+- [x] **Suppressions** — `.vexcoreignore` con rule IDs o file patterns
+- [x] **Tests básicos** — pytest sobre domain, regex analyzer, config loader, crawler, suppressions
+
+Nota: el "streaming" real a reporters (IReporter incremental) no se hizo — `pool.map` ya evita acumular results de golpe; el Report sigue siendo una lista completa. Solo importa con millones de findings; rehacer la interfaz entonces.
 
 ---
 

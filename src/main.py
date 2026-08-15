@@ -5,10 +5,18 @@ import argparse
 import sys
 from pathlib import Path
 from .analyzers import SastAnalyzer, ScaAnalyzer, SecretsAnalyzer
-from .domain import Severity
+from .domain import Severity, meets_threshold
 from .engine import Engine
 from .reporters.console import ConsoleReporter
+from .reporters.json import JsonReporter
+from .reporters.sarif import SarifReporter
 from .utils.config_loader import load_config
+
+_REPORTERS = {
+    "console": ConsoleReporter,
+    "json":    JsonReporter,
+    "sarif":   SarifReporter,
+}
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="vexcore", description="Escáner estático de seguridad.")
@@ -19,6 +27,23 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=[s.value for s in Severity],
         default=None,
         help="Threshold mínimo a reportar (default: valor en config.yaml).",
+    )
+    p.add_argument(
+        "--output",
+        choices=list(_REPORTERS),
+        default="console",
+        help="Formato de salida (default: console).",
+    )
+    p.add_argument(
+        "--fail-on",
+        choices=[s.value for s in Severity],
+        default=None,
+        help="Exit code 1 si hay findings de esta severidad o superior (default: igual a --severity/config).",
+    )
+    p.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Desactivar colores ANSI en salida de consola.",
     )
     p.add_argument(
         "--tui",
@@ -65,7 +90,16 @@ def main() -> None:
     threshold = Severity(args.severity) if args.severity else config.severity_threshold
     report    = Engine(config, analyzers).run(args.target)
 
-    ConsoleReporter(severity_threshold=threshold).report(report)
+    reporter_cls = _REPORTERS[args.output]
+    if args.output == "console":
+        reporter = reporter_cls(severity_threshold=threshold, color=not args.no_color)
+    else:
+        reporter = reporter_cls(severity_threshold=threshold)
+    reporter.report(report)
+
+    fail_on = Severity(args.fail_on) if args.fail_on else threshold
+    if any(meets_threshold(f.severity, fail_on) for f in report.findings):
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

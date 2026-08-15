@@ -17,6 +17,19 @@ class Category(StrEnum):
     SECRET = "secret"
     SCA    = "sca"
 
+# Orden canónico de severidad: crítico > alto > medio > bajo > info.
+# Es el único lugar que define el ranking; reporters y filtros lo importan.
+SEVERITY_ORDER: tuple[Severity, ...] = (
+    Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO,
+)
+
+def severity_index(s: Severity) -> int:
+    return SEVERITY_ORDER.index(s)
+
+def meets_threshold(severity: Severity, threshold: Severity) -> bool:
+    """True si severity es igual o más grave que threshold."""
+    return severity_index(severity) <= severity_index(threshold)
+
 @dataclass(frozen=True, slots=True)
 class FileInfo:
     """Snapshot inmutable de un archivo listo para analizar."""

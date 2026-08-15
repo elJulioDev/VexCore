@@ -1,7 +1,17 @@
 """console.py — Imprime findings en terminal con colores ANSI."""
 
 from __future__ import annotations
-from ..domain import Finding, Report, Severity
+import os
+import sys
+from collections import Counter
+from ..domain import (
+    SEVERITY_ORDER,
+    Finding,
+    Report,
+    Severity,
+    meets_threshold,
+    severity_index,
+)
 from ..ports import IReporter
 
 _COLORS = {
@@ -15,19 +25,23 @@ _RESET = "\033[0m"
 _BOLD  = "\033[1m"
 _DIM   = "\033[2m"
 
-_ORDER = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
-
-def _rank(s: Severity) -> int:
-    return _ORDER.index(s)
 
 class ConsoleReporter(IReporter):
-    def __init__(self, severity_threshold: Severity = Severity.LOW) -> None:
+    def __init__(
+        self,
+        severity_threshold: Severity = Severity.LOW,
+        *,
+        color: bool | None = None,
+    ) -> None:
         self._threshold = severity_threshold
+        # Auto-detecta: sin color si NO_COLOR está set o no es TTY.
+        self._color = sys.stdout.isatty() if color is None else color
+        self._color = self._color and not os.environ.get("NO_COLOR")
 
     def report(self, report: Report) -> None:
         visible = sorted(
-            [f for f in report.findings if _rank(f.severity) <= _rank(self._threshold)],
-            key=lambda f: (_rank(f.severity), str(f.file.relative), f.line),
+            [f for f in report.findings if meets_threshold(f.severity, self._threshold)],
+            key=lambda f: (severity_index(f.severity), str(f.file.relative), f.line),
         )
 
         for finding in visible:
@@ -36,10 +50,13 @@ class ConsoleReporter(IReporter):
         self._print_summary(report)
 
     def _print_finding(self, f: Finding) -> None:
-        color = _COLORS[f.severity]
+        color = _COLORS[f.severity] if self._color else ""
+        reset = _RESET if self._color else ""
+        bold  = _BOLD if self._color else ""
+        dim   = _DIM if self._color else ""
         tag   = f"[{f.severity.upper()}]"
-        print(f"\n{color}{_BOLD}{tag:<12}{_RESET} {f.rule_id} — {f.title}")
-        print(f"  {_DIM}{f.file.relative}:{f.line}{_RESET}  {f.snippet}")
+        print(f"\n{color}{bold}{tag:<12}{reset} {f.rule_id} — {f.title}")
+        print(f"  {dim}{f.file.relative}:{f.line}{reset}  {f.snippet}")
 
     def _print_summary(self, report: Report) -> None:
         print("\n" + "─" * 50)
@@ -47,9 +64,10 @@ class ConsoleReporter(IReporter):
         print(f"Hallazgos           : {report.total}")
         print(f"Tiempo              : {report.elapsed_secs}s\n")
 
-        counts = {s: len(report.by_severity(s)) for s in _ORDER if report.by_severity(s)}
-        parts  = [
-            f"{_COLORS[s]}{s.upper():<10}{_RESET}{n}"
-            for s, n in counts.items()
+        counts = Counter(f.severity for f in report.findings)
+        parts = [
+            f"{_COLORS[s] if self._color else ''}{s.upper():<10}{_RESET if self._color else ''}{counts[s]}"
+            for s in SEVERITY_ORDER
+            if counts.get(s)
         ]
         print("  " + "   ".join(parts))

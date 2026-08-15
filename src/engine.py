@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from .crawler import Crawler
 from .domain import Report
 from .ports import IAnalyzer
+from .suppressions import Suppressions
 from .utils.config_loader import AppConfig
 
 class Engine:
@@ -24,11 +26,20 @@ class Engine:
         )
 
         report = Report(target=target)
-        start  = time.perf_counter()
+        suppressions = Suppressions(target)
+        start = time.perf_counter()
 
-        for file_info in crawler.walk():
-            for analyzer in self._analyzers:
-                report.findings.extend(analyzer.analyze(file_info))
+        def _analyze(file_info):
+            return [
+                f for analyzer in self._analyzers
+                for f in analyzer.analyze(file_info)
+            ]
+
+        # ponytail: pool por defecto de ThreadPoolExecutor (min(32, cpu+4)).
+        # Los analyzers son stateless por archivo; safe para threads.
+        with ThreadPoolExecutor() as pool:
+            for findings in pool.map(_analyze, crawler.walk()):
+                report.findings.extend(suppressions.filter(findings))
 
         report.scanned_files = crawler.stats["visited"]
         report.elapsed_secs  = round(time.perf_counter() - start, 3)

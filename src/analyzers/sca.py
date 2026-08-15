@@ -9,6 +9,7 @@ una base de vulnerabilidades conocidas (reglas JSON).
 from __future__ import annotations
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from ..domain import Category, FileInfo, Finding, Severity
@@ -308,44 +309,49 @@ class ScaAnalyzer(IAnalyzer):
         if not pkgs:
             return []
         findings: list[Finding] = []
-        for pkg_name, pkg_version in pkgs:
-            osv_findings: list[Finding] = []
-            local_findings: list[Finding] = []
+        # ponytail: pool fijo para queries OSV. Safe porque cada paquete
+        # se procesa aislado y el cache de OSV es idempotente por clave.
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            for result in pool.map(lambda p: self._analyze_pkg(file, p[0], p[1]), pkgs):
+                findings.extend(result)
+        return findings
 
-            if self._source in ("osv", "both"):
-                try:
-                    vulns = osv_client.query("PyPI", pkg_name, pkg_version)
-                except Exception:
-                    vulns = []
-                for ov in vulns:
-                    snippet = f"{pkg_name}=={pkg_version}"
-                    if ov.fixed:
-                        snippet += f" (fix: {ov.fixed})"
-                    osv_findings.append(Finding(
-                        rule_id=ov.id,
-                        title=ov.summary,
-                        severity=ov.severity,
+    def _analyze_pkg(self, file: FileInfo, pkg_name: str, pkg_version: str) -> list[Finding]:
+        osv_findings: list[Finding] = []
+        local_findings: list[Finding] = []
+
+        if self._source in ("osv", "both"):
+            try:
+                vulns = osv_client.query("PyPI", pkg_name, pkg_version)
+            except Exception:
+                vulns = []
+            for ov in vulns:
+                snippet = f"{pkg_name}=={pkg_version}"
+                if ov.fixed:
+                    snippet += f" (fix: {ov.fixed})"
+                osv_findings.append(Finding(
+                    rule_id=ov.id,
+                    title=ov.summary,
+                    severity=ov.severity,
+                    category=Category.SCA,
+                    file=file,
+                    line=1,
+                    snippet=snippet,
+                ))
+
+        if self._source in ("local",) or (self._source == "both" and not osv_findings):
+            for rule in self._rules:
+                if pkg_name != rule.package:
+                    continue
+                if _matches_constraint(pkg_version, rule.version_constraint):
+                    local_findings.append(Finding(
+                        rule_id=rule.id,
+                        title=rule.title,
+                        severity=rule.severity,
                         category=Category.SCA,
                         file=file,
                         line=1,
-                        snippet=snippet,
+                        snippet=f"{pkg_name}=={pkg_version}",
                     ))
 
-            if self._source in ("local",) or (self._source == "both" and not osv_findings):
-                for rule in self._rules:
-                    if pkg_name != rule.package:
-                        continue
-                    if _matches_constraint(pkg_version, rule.version_constraint):
-                        local_findings.append(Finding(
-                            rule_id=rule.id,
-                            title=rule.title,
-                            severity=rule.severity,
-                            category=Category.SCA,
-                            file=file,
-                            line=1,
-                            snippet=f"{pkg_name}=={pkg_version}",
-                        ))
-
-            findings.extend(osv_findings if osv_findings else local_findings)
-
-        return findings
+        return osv_findings if osv_findings else local_findings
