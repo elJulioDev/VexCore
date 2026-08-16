@@ -1,37 +1,69 @@
-/* Terminal-native TUI styles — compact, no frills */
+/* VexCore TUI — professional terminal UI */
 
 Screen {
     background: $surface;
 }
 
-/* === Header === */
 Header {
     background: $primary;
     color: $text;
 }
 
-/* === Header bar (project info + stats) === */
-#header-bar {
-    height: 1;
-    padding: 0 1;
-    color: $text;
-    background: $panel;
-}
-
-/* === Findings list (body) === */
-#scroll {
-    height: 1fr;
-}
-
-#findings-list {
-    padding: 0 1;
-    color: $text;
-}
-
-/* === Footer (keybinding help) === */
-#footer-bar {
-    height: 1;
-    padding: 0 1;
+Footer {
     background: $panel;
     color: $text-muted;
+}
+
+/* === Sidebar === */
+#sidebar {
+    background: $panel;
+    color: $text;
+    padding: 1 1;
+}
+
+/* === Main column === */
+#main-col {
+    background: $surface;
+}
+
+/* === Search === */
+#search-bar {
+    height: 3;
+    background: $panel;
+    padding: 0 1;
+    border-bottom: tall $primary;
+}
+
+#search-input {
+    height: 1;
+    background: $surface;
+    color: $text;
+    border: none;
+}
+
+#search-input:focus {
+    border: tall $primary;
+}
+
+/* === Findings table === */
+#findings-table {
+    height: 1fr;
+    background: $surface;
+    color: $text;
+}
+
+/* === Detail panel === */
+#detail {
+    background: $panel;
+    color: $text;
+    padding: 0 1;
+    border-top: tall $primary;
+}
+
+/* === Scan status === */
+#scan-status {
+    height: 1;
+    background: $panel;
+    color: $text;
+    padding: 0 1;
 }
