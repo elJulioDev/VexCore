@@ -1,7 +1,7 @@
 """Tests de domain.py — entidades y orden de severidad."""
 
 from __future__ import annotations
-from src.domain import Category, FileInfo, Finding, Report, Severity, meets_threshold, severity_index
+from vexcore.domain import Category, FileInfo, Finding, Report, Severity, meets_threshold, severity_index
 from pathlib import Path
 
 def test_severity_order():

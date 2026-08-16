@@ -19,7 +19,7 @@ import sys
 
 def main() -> int:
     files = sys.argv[1:]
-    cmd = [sys.executable, "-m", "src.main", "--output", "json", "--fail-on", "high"]
+    cmd = [sys.executable, "-m", "vexcore.main", "--output", "json", "--fail-on", "high"]
 
     if files:
         # pre-commit pasa los archivos staged. Escaneamos el directorio

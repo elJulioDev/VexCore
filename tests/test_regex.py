@@ -4,9 +4,9 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from src.analyzers._base import RegexAnalyzer, load_rules
-from src.domain import Category, FileInfo, Severity
-from src.analyzers._base import Rule
+from vexcore.analyzers._base import RegexAnalyzer, load_rules
+from vexcore.domain import Category, FileInfo, Severity
+from vexcore.analyzers._base import Rule
 
 def _file(tmp_path: Path, name: str, content: str) -> FileInfo:
     p = tmp_path / name

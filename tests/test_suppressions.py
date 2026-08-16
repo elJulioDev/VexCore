@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 from pathlib import Path
-from src.domain import Category, FileInfo, Finding, Severity
-from src.suppressions import Suppressions
+from vexcore.domain import Category, FileInfo, Finding, Severity
+from vexcore.suppressions import Suppressions
 
 def _finding(rule_id: str, rel: str) -> Finding:
     return Finding(

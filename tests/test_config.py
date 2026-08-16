@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from pathlib import Path
-from src.utils.config_loader import load_config
+from vexcore.utils.config_loader import load_config
 
 def test_load_config_defaults(tmp_path):
     cfg_path = tmp_path / "config.yaml"

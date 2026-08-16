@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from pathlib import Path
-from src.crawler import Crawler
+from vexcore.crawler import Crawler
 
 def _make_tree(root: Path) -> None:
     (root / "src").mkdir()

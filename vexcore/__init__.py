@@ -1,8 +1,8 @@
 """vexcore — Escáner estático de seguridad.
 
 Uso como librería:
-    from src import scan
-    report = scan("./myproject")
+    import vexcore
+    report = vexcore.scan("./myproject")
     print(report.total)
 """
 
