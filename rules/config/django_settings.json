@@ -1,0 +1,23 @@
+[
+  {
+    "id": "CFG008",
+    "title": "DEBUG activo en settings de Django",
+    "severity": "medium",
+    "extensions": [".py"],
+    "pattern": "^\\s*DEBUG\\s*=\\s*True"
+  },
+  {
+    "id": "CFG009",
+    "title": "ALLOWED_HOSTS vacío o wildcard en settings",
+    "severity": "medium",
+    "extensions": [".py"],
+    "pattern": "^\\s*ALLOWED_HOSTS\\s*=\\s*\\[\\s*(\"\\*\"|'\\*')\\s*\\]"
+  },
+  {
+    "id": "CFG010",
+    "title": "SECURE_SSL_REDIRECT desactivado",
+    "severity": "medium",
+    "extensions": [".py"],
+    "pattern": "^\\s*SECURE_SSL_REDIRECT\\s*=\\s*False"
+  }
+]

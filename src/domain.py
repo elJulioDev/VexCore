@@ -16,6 +16,7 @@ class Category(StrEnum):
     SAST   = "sast"
     SECRET = "secret"
     SCA    = "sca"
+    CONFIG = "config"
 
 # Orden canónico de severidad: crítico > alto > medio > bajo > info.
 # Es el único lugar que define el ranking; reporters y filtros lo importan.

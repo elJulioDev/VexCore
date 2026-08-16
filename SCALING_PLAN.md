@@ -2,7 +2,7 @@
 
 ## Estado actual
 
-~1,340 líneas Python, 50 reglas JSON. SAST regex por línea, secrets con patrones, SCA con OSV API. Un solo reporter (consola), sin tests, sin paralelismo, sin plugin system.
+~1,800 líneas Python, 74 reglas JSON. SAST regex + AST (Python), secrets, SCA con OSV API, config rules. Tres reporters (consola, JSON, SARIF), paralelismo en engine y queries OSV, suppressions, deduplicación, plugin system, tests básicos (10 tests).
 
 ---
 
@@ -24,13 +24,13 @@ Nota: el "streaming" real a reporters (IReporter incremental) no se hizo — `po
 
 ---
 
-## Fase 2 — Plugin system y más lenguajes [ ]
+## Fase 2 — Plugin system y más lenguajes [X]
 
-- [ ] **Plugin protocol** — Directorio con `plugin.json` + módulo `IAnalyzer`
-- [ ] **AST-based analyzer** — `analyzers/ast_analyzer.py` con `ast` stdlib para Python
-- [ ] **Más reglas SAST** — Python, Go, Java, Ruby en `rules/sast/`
-- [ ] **Reglas de configuración** — `rules/config/` para `.env`, `docker-compose`, `settings.py`
-- [ ] **Deduplicación de findings** — Misma línea + misma categoría = solo mayor severidad
+- [x] **Plugin protocol** — `src/plugins.py` + `plugins/` dir + `plugin.json`
+- [x] **AST-based analyzer** — `analyzers/ast_analyzer.py` con `ast` stdlib para Python
+- [x] **Más reglas SAST** — Go, Java, Ruby en `rules/sast/`
+- [x] **Reglas de configuración** — `rules/config/` para `.env`, `docker-compose`, `settings.py`
+- [x] **Deduplicación de findings** — engine.py `_deduplicate()`: misma línea + misma categoría = solo mayor severidad
 
 ---
 

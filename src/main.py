@@ -4,9 +4,10 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from .analyzers import SastAnalyzer, ScaAnalyzer, SecretsAnalyzer
+from .analyzers import SastAnalyzer, ScaAnalyzer, SecretsAnalyzer, ConfigAnalyzer, AstAnalyzer
 from .domain import Severity, meets_threshold
 from .engine import Engine
+from .plugins import load_plugins
 from .reporters.console import ConsoleReporter
 from .reporters.json import JsonReporter
 from .reporters.sarif import SarifReporter
@@ -86,6 +87,13 @@ def main() -> None:
     # versiones contra una base de vulnerabilidades conocidas.
     if config.sca.enabled:
         analyzers.append(ScaAnalyzer(config.sca.rules_path, source=config.sca.source))
+    if config.config.enabled:
+        analyzers.append(ConfigAnalyzer(config.config.rules_path))
+
+    analyzers.append(AstAnalyzer())
+
+    if config.plugins_dir:
+        analyzers.extend(load_plugins(config.plugins_dir))
 
     threshold = Severity(args.severity) if args.severity else config.severity_threshold
     report    = Engine(config, analyzers).run(args.target)

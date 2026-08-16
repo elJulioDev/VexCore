@@ -1,0 +1,37 @@
+[
+  {
+    "id": "JAV001",
+    "title": "Runtime.exec() con input no controlado",
+    "severity": "high",
+    "extensions": [".java"],
+    "pattern": "Runtime\\.getRuntime\\(\\)\\.exec\\("
+  },
+  {
+    "id": "JAV002",
+    "title": "Deserialización insegura con ObjectInputStream",
+    "severity": "critical",
+    "extensions": [".java"],
+    "pattern": "ObjectInputStream.*readObject"
+  },
+  {
+    "id": "JAV003",
+    "title": "SQL injection por concatenación",
+    "severity": "high",
+    "extensions": [".java"],
+    "pattern": "\".*(?:SELECT|INSERT|UPDATE|DELETE).*\"\\s*\\+"
+  },
+  {
+    "id": "JAV004",
+    "title": "MD5 o SHA1 para hashing de contraseñas",
+    "severity": "medium",
+    "extensions": [".java"],
+    "pattern": "MessageDigest\\.getInstance\\(\"(?:MD5|SHA-1)\"\\)"
+  },
+  {
+    "id": "JAV005",
+    "title": "Credenciales hardcodeadas en Java",
+    "severity": "high",
+    "extensions": [".java"],
+    "pattern": "(?i)(password|secret|token|api_key)\\s*=\\s*\"[^\"]{8,}\""
+  }
+]

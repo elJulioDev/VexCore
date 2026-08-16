@@ -5,7 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from .crawler import Crawler
-from .domain import Report
+from .domain import Report, severity_index
 from .ports import IAnalyzer
 from .suppressions import Suppressions
 from .utils.config_loader import AppConfig
@@ -43,5 +43,19 @@ class Engine:
 
         report.scanned_files = crawler.stats["visited"]
         report.elapsed_secs  = round(time.perf_counter() - start, 3)
+        report.findings = _deduplicate(report.findings)
 
         return report
+
+
+def _deduplicate(findings: list) -> list:
+    """Agrupa por (archivo, línea, categoría) y conserva solo la mayor severidad."""
+    # ponytail: dict como agrupador. O(n) con n = findings. Upgrade:
+    # itertools.groupby si findings ya viene ordenado.
+    best: dict[tuple, object] = {}
+    for f in findings:
+        key = (f.file.relative, f.line, f.category)
+        prev = best.get(key)
+        if prev is None or severity_index(f.severity) < severity_index(prev.severity):
+            best[key] = f
+    return list(best.values())

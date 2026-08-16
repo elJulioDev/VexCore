@@ -1,0 +1,37 @@
+[
+  {
+    "id": "GOO001",
+    "title": "Ejecución de comando con variable",
+    "severity": "high",
+    "extensions": [".go"],
+    "pattern": "exec\\.Command\\([^\"\\)]+\\)"
+  },
+  {
+    "id": "GOO002",
+    "title": "Servidor HTTP sin TLS",
+    "severity": "medium",
+    "extensions": [".go"],
+    "pattern": "http\\.ListenAndServe\\("
+  },
+  {
+    "id": "GOO003",
+    "title": "Credenciales hardcodeadas en Go",
+    "severity": "high",
+    "extensions": [".go"],
+    "pattern": "(?i)(password|secret|token|api_key)\\s*:=\\s*\"[^\"]{8,}\""
+  },
+  {
+    "id": "GOO004",
+    "title": "SQL query con fmt.Sprintf",
+    "severity": "high",
+    "extensions": [".go"],
+    "pattern": "fmt\\.Sprintf\\([^)]*(?:SELECT|INSERT|UPDATE|DELETE)"
+  },
+  {
+    "id": "GOO005",
+    "title": "Uso de unsafe.Pointer",
+    "severity": "medium",
+    "extensions": [".go"],
+    "pattern": "unsafe\\.Pointer\\("
+  }
+]

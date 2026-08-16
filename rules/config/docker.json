@@ -1,0 +1,23 @@
+[
+  {
+    "id": "CFG005",
+    "title": "Contenedor con privilegios elevados",
+    "severity": "high",
+    "extensions": [".yaml", ".yml"],
+    "pattern": "privileged:\\s*true"
+  },
+  {
+    "id": "CFG006",
+    "title": "Puerto expuesto sin bind a localhost",
+    "severity": "medium",
+    "extensions": [".yaml", ".yml"],
+    "pattern": "\"?ports\"?\\s*:\\s*\\n\\s*-\\s*\"?\\d+:\\d+\"?\\s*$"
+  },
+  {
+    "id": "CFG007",
+    "title": "Host network mode en docker-compose",
+    "severity": "medium",
+    "extensions": [".yaml", ".yml"],
+    "pattern": "network_mode:\\s*host"
+  }
+]

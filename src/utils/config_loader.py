@@ -28,6 +28,8 @@ class AppConfig:
     sast:               AnalyzerConfig
     secrets:            AnalyzerConfig
     sca:                AnalyzerConfig
+    config:             AnalyzerConfig
+    plugins_dir:        Path | None = None
     severity_threshold: Severity = Severity.LOW
 
 def load_config(path: str | Path = "config.yaml") -> AppConfig:
@@ -57,6 +59,8 @@ def _parse(raw: dict) -> AppConfig:
         sast=_parse_analyzer(a.get("sast", {}), default_path="rules/sast"),
         secrets=_parse_analyzer(a.get("secrets", {}), default_path="rules/secrets"),
         sca=_parse_analyzer(a.get("sca", {}), default_path="rules/sca", default_enabled=False),
+        config=_parse_analyzer(a.get("config", {}), default_path="rules/config", default_enabled=False),
+        plugins_dir=Path(p) if (p := raw.get("plugins_dir")) else None,
         severity_threshold=Severity(raw.get("output", {}).get("severity_threshold", "low")),
     )
 

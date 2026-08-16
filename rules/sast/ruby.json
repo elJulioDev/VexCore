@@ -1,0 +1,30 @@
+[
+  {
+    "id": "RBY001",
+    "title": "Render inline en Ruby (posible SSTI)",
+    "severity": "high",
+    "extensions": [".rb"],
+    "pattern": "render\\s+inline:"
+  },
+  {
+    "id": "RBY002",
+    "title": "Uso de system() con input no controlado",
+    "severity": "high",
+    "extensions": [".rb"],
+    "pattern": "\\bsystem\\s*\\("
+  },
+  {
+    "id": "RBY003",
+    "title": "Uso de eval en Ruby",
+    "severity": "high",
+    "extensions": [".rb"],
+    "pattern": "\\beval\\s*[\"']"
+  },
+  {
+    "id": "RBY004",
+    "title": "Credenciales hardcodeadas en Ruby",
+    "severity": "high",
+    "extensions": [".rb"],
+    "pattern": "(?i)(password|secret|token|api_key)\\s*=\\s*\"[^\"]{8,}\""
+  }
+]

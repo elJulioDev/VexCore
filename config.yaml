@@ -41,6 +41,11 @@ analyzers:
     enabled: false
     rules_path: rules/sca
     source: both       # both, osv, o local
+  config:
+    enabled: false
+    rules_path: rules/config
+
+plugins_dir: plugins
 
 output:
   severity_threshold: low
