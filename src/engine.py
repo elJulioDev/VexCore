@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from .cache import FileCache
 from .crawler import Crawler
 from .domain import Report, severity_index
 from .ports import IAnalyzer
@@ -35,13 +36,28 @@ class Engine:
                 for f in analyzer.analyze(file_info)
             ]
 
-        # ponytail: pool por defecto de ThreadPoolExecutor (min(32, cpu+4)).
-        # Los analyzers son stateless por archivo; safe para threads.
-        with ThreadPoolExecutor() as pool:
-            for findings in pool.map(_analyze, crawler.walk()):
-                report.findings.extend(suppressions.filter(findings))
+        if self._config.incremental:
+            cache = FileCache()
+            all_files = list(crawler.walk())
+            changed = cache.get_changed([fi.absolute for fi in all_files])
+            changed_set = {str(p) for p in changed}
+            files_to_scan = [fi for fi in all_files if str(fi.absolute) in changed_set]
+            # ponytail: scan completo si cache vacío (primera ejecución).
+            if not changed:
+                files_to_scan = all_files
+            cache.update([fi.absolute for fi in all_files])
+            cache.save()
+            report.scanned_files = len(all_files)
+            with ThreadPoolExecutor() as pool:
+                for findings in pool.map(_analyze, files_to_scan):
+                    report.findings.extend(suppressions.filter(findings))
+        else:
+            # ponytail: pool por defecto de ThreadPoolExecutor (min(32, cpu+4)).
+            with ThreadPoolExecutor() as pool:
+                for findings in pool.map(_analyze, crawler.walk()):
+                    report.findings.extend(suppressions.filter(findings))
+            report.scanned_files = crawler.stats["visited"]
 
-        report.scanned_files = crawler.stats["visited"]
         report.elapsed_secs  = round(time.perf_counter() - start, 3)
         report.findings = _deduplicate(report.findings)
 

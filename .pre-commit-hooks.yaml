@@ -1,0 +1,6 @@
+- id: vexcore
+  name: VexCore SAST Scanner
+  entry: python pre_commit_hook.py
+  language: system
+  types: [python]
+  description: Escáner estático de seguridad — detecta SQLi, secretos, eval(), y más

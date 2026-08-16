@@ -2,7 +2,7 @@
 
 ## Estado actual
 
-~1,800 líneas Python, 74 reglas JSON. SAST regex + AST (Python), secrets, SCA con OSV API, config rules. Tres reporters (consola, JSON, SARIF), paralelismo en engine y queries OSV, suppressions, deduplicación, plugin system, tests básicos (10 tests).
+~2,000 líneas Python, 74 reglas JSON. SAST regex + AST (Python), secrets, SCA con OSV API, config rules. Tres reporters (consola, JSON, SARIF), paralelismo en engine y queries OSV, suppressions, deduplicación, plugin system, incremental scanning, librería Python, pre-commit hook, GitHub Action, tests básicos (10 tests).
 
 ---
 
@@ -34,13 +34,13 @@ Nota: el "streaming" real a reporters (IReporter incremental) no se hizo — `po
 
 ---
 
-## Fase 3 — Integración y ecosistema [ ]
+## Fase 3 — Integración y ecosistema [X]
 
-- [ ] **Pre-commit hook** — `pre_commit_hook.py` + config sample
-- [ ] **GitHub Action** — `.github/workflows/vexcore.yml` reutilizable
-- [ ] **Incremental scanning** — SHA-256 hash cache en `~/.vexcore/cache/files.json`
-- [ ] **Config global** — `~/.vexcore/config.yaml` como default
-- [ ] **Librería Python** — `import vexcore; report = vexcore.scan("./myproject")`
+- [x] **Pre-commit hook** — `pre_commit_hook.py` + `.pre-commit-hooks.yaml`
+- [x] **GitHub Action** — `.github/workflows/vexcore.yml` reutilizable
+- [x] **Incremental scanning** — `src/cache.py` con SHA-256 en `~/.vexcore/cache/files.json`
+- [x] **Config global** — `~/.vexcore/config.yaml` como fallback
+- [x] **Librería Python** — `import vexcore; report = vexcore.scan("./myproject")`
 
 ---
 
@@ -60,9 +60,9 @@ Solo si el proyecto crece. No hacer todavía.
 | Fase | Nuevas dependencias |
 |------|---------------------|
 | 1 | Ninguna (stdlib) |
-| 2 | `tomllib` (stdlib 3.11+) |
-| 3 | `watchfiles` (opcional, solo daemon) |
-| 4 | `fastapi` + `uvicorn` |
+| 2 | Ninguna (stdlib) |
+| 3 | Ninguna (stdlib) |
+| 4 | `watchfiles`, `fastapi` + `uvicorn` |
 
 ## No hacer
 

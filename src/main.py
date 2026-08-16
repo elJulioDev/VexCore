@@ -22,7 +22,7 @@ _REPORTERS = {
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="vexcore", description="Escáner estático de seguridad.")
     p.add_argument("target", nargs="?", type=Path, default=None, help="Directorio a escanear.")
-    p.add_argument("-c", "--config", type=Path, default=Path("config.yaml"))
+    p.add_argument("-c", "--config", type=Path, default=None, help="Ruta a config.yaml (default: busca en CWD, luego ~/.vexcore/).")
     p.add_argument(
         "--severity",
         choices=[s.value for s in Severity],
@@ -50,6 +50,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--tui",
         action="store_true",
         help="Iniciar interfaz TUI interactiva.",
+    )
+    p.add_argument(
+        "--incremental",
+        action="store_true",
+        help="Solo re-escanear archivos modificados (usa caché de hashes).",
     )
     return p
 
@@ -96,6 +101,8 @@ def main() -> None:
         analyzers.extend(load_plugins(config.plugins_dir))
 
     threshold = Severity(args.severity) if args.severity else config.severity_threshold
+    if args.incremental:
+        config.incremental = True
     report    = Engine(config, analyzers).run(args.target)
 
     reporter_cls = _REPORTERS[args.output]

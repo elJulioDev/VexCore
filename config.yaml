@@ -47,5 +47,7 @@ analyzers:
 
 plugins_dir: plugins
 
+incremental: false
+
 output:
   severity_threshold: low
