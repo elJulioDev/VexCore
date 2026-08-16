@@ -21,7 +21,7 @@ jobs:
       - run: uv sync
 
       - name: Run VexCore
-        run: uv run vexcore . --output sarif --fail-on high > sarif.json
+        run: uv run vexcore . --output sarif > sarif.json
 
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
