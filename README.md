@@ -86,17 +86,25 @@ crawler:
 analyzers:
   sast:
     enabled: true
-    rules_path: rules/sast
   secrets:
     enabled: true
-    rules_path: rules/secrets
   sca:
     enabled: false       # Cambiar a true para activar SCA
-    rules_path: rules/sca
     source: both         # both (OSV+local), osv (solo API), local (solo JSON)
 
 output:
   severity_threshold: low
+```
+
+Las reglas vienen incluidas en el paquete (`vexcore/rules/`), así que
+VexCore funciona desde cualquier directorio. Para usar reglas propias,
+añade `rules_path` a un analizador; las rutas relativas se resuelven
+desde el directorio del `config.yaml`, no desde el directorio actual:
+
+```yaml
+analyzers:
+  sast:
+    rules_path: mis-reglas/sast
 ```
 
 El análisis SCA está deshabilitado por defecto. Para activarlo, cambia
@@ -107,7 +115,7 @@ de dependencias con versiones vulnerables.
 La fuente de datos se configura con `source`:
 
 - **both** (default): consulta [OSV.dev](https://osv.dev) primero,
-  si falla la conexión usa las reglas locales (`rules/sca/`)
+  si falla la conexión usa las reglas locales (`vexcore/rules/sca/`)
 - **osv**: solo consulta online, ignora reglas locales
 - **local**: solo reglas locales, sin conexión a internet
 
@@ -153,11 +161,11 @@ una restricción semántica (`<3.2.25`, `>=1.0,<2.0`, etc.).
 
 | Archivo | ID | Cantidad | Categoría |
 |---------|----|----------|-----------|
-| `rules/sast/django.json` | DJG001–005 | 5 | SAST Python/Django |
-| `rules/sast/php.json` | PHP001–007 | 7 | SAST PHP |
-| `rules/sast/js.json` | JS001–006 | 6 | SAST JavaScript/React |
-| `rules/secrets/generic.json` | SEC001–014 | 14 | Secretos (agnóstico) |
-| `rules/sca/pypi.json` | PYA001–010 | 10 | SCA PyPI |
+| `vexcore/rules/sast/django.json` | DJG001–005 | 5 | SAST Python/Django |
+| `vexcore/rules/sast/php.json` | PHP001–007 | 7 | SAST PHP |
+| `vexcore/rules/sast/js.json` | JS001–006 | 6 | SAST JavaScript/React |
+| `vexcore/rules/secrets/generic.json` | SEC001–014 | 14 | Secretos (agnóstico) |
+| `vexcore/rules/sca/pypi.json` | PYA001–010 | 10 | SCA PyPI |
 
 Ver documentación detallada con ejemplos de código vulnerable y cómo
 corregirlo en:
@@ -174,11 +182,12 @@ vexcore/
 ├── docs/                   # Documentación detallada de reglas
 │   ├── python.md           #   Reglas Python (SAST + SCA)
 │   └── php.md              #   Reglas PHP y JS
-├── rules/                  # Reglas en formato JSON
-│   ├── sast/               #   django.json, js.json, php.json
-│   ├── secrets/            #   generic.json (14 patrones)
-│   └── sca/                #   pypi.json (10 reglas SCA)
-    └── src/
+└── vexcore/                # Paquete Python
+    ├── rules/              # Reglas en formato JSON (incluidas en el paquete)
+    │   ├── sast/           #   django, go, java, js, php, ruby
+    │   ├── secrets/        #   generic.json
+    │   ├── config/         #   django_settings, docker, env
+    │   └── sca/            #   pypi.json
     ├── analyzers/          # Motores de análisis
     │   ├── _loader.py      #   Carga de reglas JSON
     │   ├── _regex.py       #   Engine regex compartido

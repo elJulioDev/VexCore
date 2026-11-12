@@ -256,8 +256,8 @@ class MainScreen(Screen):
 
         try:
             config = load_config()
-        except FileNotFoundError:
-            status.update("[red]config.yaml no encontrado[/]")
+        except FileNotFoundError as e:
+            status.update(f"[red]{e}[/]")
             return
 
         analyzers = []
