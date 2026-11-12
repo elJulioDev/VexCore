@@ -28,8 +28,8 @@ Nota: el "streaming" real a reporters (IReporter incremental) no se hizo — `po
 
 - [x] **Plugin protocol** — `src/plugins.py` + `plugins/` dir + `plugin.json`
 - [x] **AST-based analyzer** — `analyzers/ast_analyzer.py` con `ast` stdlib para Python
-- [x] **Más reglas SAST** — Go, Java, Ruby en `rules/sast/`
-- [x] **Reglas de configuración** — `rules/config/` para `.env`, `docker-compose`, `settings.py`
+- [x] **Más reglas SAST** — Go, Java, Ruby en `vexcore/rules/sast/`
+- [x] **Reglas de configuración** — `vexcore/rules/config/` para `.env`, `docker-compose`, `settings.py`
 - [x] **Deduplicación de findings** — engine.py `_deduplicate()`: misma línea + misma categoría = solo mayor severidad
 
 ---

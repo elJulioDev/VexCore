@@ -33,17 +33,13 @@ crawler:
 analyzers:
   sast:
     enabled: true
-    rules_path: rules/sast
   secrets:
     enabled: true
-    rules_path: rules/secrets
   sca:
     enabled: false
-    rules_path: rules/sca
     source: both       # both, osv, o local
   config:
     enabled: false
-    rules_path: rules/config
 
 plugins_dir: plugins
 

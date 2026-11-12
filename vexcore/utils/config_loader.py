@@ -10,6 +10,10 @@ from ..domain import Severity
 _MB = 1024 * 1024
 _GLOBAL_CONFIG = Path("~/.vexcore/config.yaml").expanduser()
 
+# Rules ship inside the package, so the defaults work from any working directory
+# and in an installed wheel.
+BUILTIN_RULES_DIR = Path(__file__).resolve().parent.parent / "rules"
+
 @dataclass
 class CrawlerConfig:
     ignore_dirs:         set[str]
@@ -43,12 +47,13 @@ def load_config(path: str | Path | None = None) -> AppConfig:
     """
     config_path = _resolve_config_path(path)
     if config_path is None:
-        return _parse({})
+        return _validate(_parse({}, base_dir=Path.cwd()))
 
     with config_path.open(encoding="utf-8") as f:
         raw = yaml.safe_load(f) or {}
 
-    return _parse(raw)
+    # Relative paths in a config file are relative to that file, not to the CWD.
+    return _validate(_parse(raw, base_dir=config_path.resolve().parent))
 
 
 def _resolve_config_path(explicit: str | Path | None) -> Path | None:
@@ -67,7 +72,7 @@ def _resolve_config_path(explicit: str | Path | None) -> Path | None:
 
     return None
 
-def _parse(raw: dict) -> AppConfig:
+def _parse(raw: dict, base_dir: Path) -> AppConfig:
     c = raw.get("crawler", {})
     a = raw.get("analyzers", {})
 
@@ -80,23 +85,44 @@ def _parse(raw: dict) -> AppConfig:
 
     return AppConfig(
         crawler=crawler,
-        sast=_parse_analyzer(a.get("sast", {}), default_path="rules/sast"),
-        secrets=_parse_analyzer(a.get("secrets", {}), default_path="rules/secrets"),
-        sca=_parse_analyzer(a.get("sca", {}), default_path="rules/sca", default_enabled=False),
-        config=_parse_analyzer(a.get("config", {}), default_path="rules/config", default_enabled=False),
-        plugins_dir=Path(p) if (p := raw.get("plugins_dir")) else None,
+        sast=_parse_analyzer(a.get("sast", {}), "sast", base_dir),
+        secrets=_parse_analyzer(a.get("secrets", {}), "secrets", base_dir),
+        sca=_parse_analyzer(a.get("sca", {}), "sca", base_dir, default_enabled=False),
+        config=_parse_analyzer(a.get("config", {}), "config", base_dir, default_enabled=False),
+        plugins_dir=_resolve(p, base_dir) if (p := raw.get("plugins_dir")) else None,
         incremental=raw.get("incremental", False),
         severity_threshold=Severity(raw.get("output", {}).get("severity_threshold", "low")),
     )
 
 def _parse_analyzer(
     section: dict,
+    name: str,
+    base_dir: Path,
     *,
-    default_path: str,
     default_enabled: bool = True,
 ) -> AnalyzerConfig:
+    custom = section.get("rules_path")
     return AnalyzerConfig(
         enabled=section.get("enabled", default_enabled),
-        rules_path=Path(section.get("rules_path", default_path)),
+        rules_path=_resolve(custom, base_dir) if custom else BUILTIN_RULES_DIR / name,
         source=section.get("source", "both"),
     )
+
+def _resolve(path: str | Path, base_dir: Path) -> Path:
+    """Expand ~ and anchor a relative path at base_dir."""
+    p = Path(path).expanduser()
+    return p if p.is_absolute() else base_dir / p
+
+def _validate(cfg: AppConfig) -> AppConfig:
+    """Fail loudly if an enabled analyzer has no rules directory.
+
+    Otherwise the analyzer would load zero rules and the scan would silently
+    report a clean result.
+    """
+    for name in ("sast", "secrets", "sca", "config"):
+        analyzer: AnalyzerConfig = getattr(cfg, name)
+        if analyzer.enabled and not analyzer.rules_path.is_dir():
+            raise FileNotFoundError(
+                f"No se encontró el directorio de reglas de '{name}': {analyzer.rules_path}"
+            )
+    return cfg
