@@ -2,7 +2,7 @@
 
 ## Estado actual
 
-~2,000 líneas Python, 74 reglas JSON. SAST regex + AST (Python), secrets, SCA con OSV API, config rules. Tres reporters (consola, JSON, SARIF), paralelismo en engine y queries OSV, suppressions, deduplicación, plugin system, incremental scanning, librería Python, pre-commit hook, GitHub Action, tests básicos (10 tests).
+~2,200 líneas Python, 74 reglas JSON (incluidas en el paquete). SAST regex + AST (Python), secrets, SCA con OSV API, config rules. Tres reporters (consola, JSON, SARIF), paralelismo en engine y queries OSV, suppressions, deduplicación, plugin system, incremental scanning, librería Python, pre-commit hook, CI en GitHub Actions (ruff, tests en Python 3.11–3.14, smoke test del wheel, Code Scanning), 21 tests.
 
 ---
 
@@ -26,7 +26,7 @@ Nota: el "streaming" real a reporters (IReporter incremental) no se hizo — `po
 
 ## Fase 2 — Plugin system y más lenguajes [X]
 
-- [x] **Plugin protocol** — `src/plugins.py` + `plugins/` dir + `plugin.json`
+- [x] **Plugin protocol** — `vexcore/plugins.py` + `plugins/` dir + `plugin.json`
 - [x] **AST-based analyzer** — `analyzers/ast_analyzer.py` con `ast` stdlib para Python
 - [x] **Más reglas SAST** — Go, Java, Ruby en `vexcore/rules/sast/`
 - [x] **Reglas de configuración** — `vexcore/rules/config/` para `.env`, `docker-compose`, `settings.py`
@@ -37,8 +37,8 @@ Nota: el "streaming" real a reporters (IReporter incremental) no se hizo — `po
 ## Fase 3 — Integración y ecosistema [X]
 
 - [x] **Pre-commit hook** — `pre_commit_hook.py` + `.pre-commit-hooks.yaml`
-- [x] **GitHub Action** — `.github/workflows/vexcore.yml` reutilizable
-- [x] **Incremental scanning** — `src/cache.py` con SHA-256 en `~/.vexcore/cache/files.json`
+- [x] **GitHub Action** — `.github/workflows/vexcore.yml` escanea el repo y sube SARIF a Code Scanning
+- [x] **Incremental scanning** — `vexcore/cache.py` con SHA-256 en `~/.vexcore/cache/files.json`
 - [x] **Config global** — `~/.vexcore/config.yaml` como fallback
 - [x] **Librería Python** — `import vexcore; report = vexcore.scan("./myproject")`
 

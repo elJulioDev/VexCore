@@ -107,7 +107,8 @@ def main() -> None:
 
     reporter_cls = _REPORTERS[args.output]
     if args.output == "console":
-        reporter = reporter_cls(severity_threshold=threshold, color=not args.no_color)
+        # None lets the reporter auto-detect: no color when piped or NO_COLOR is set.
+        reporter = reporter_cls(severity_threshold=threshold, color=False if args.no_color else None)
     else:
         reporter = reporter_cls(severity_threshold=threshold)
     reporter.report(report)

@@ -1,87 +1,88 @@
 # VexCore
 
-Escáner estático de seguridad (SAST), detección de secretos y análisis de
-dependencias (SCA), diseñado bajo los principios de **Arquitectura Hexagonal**
-(Puertos y Adaptadores).
+Escáner estático de seguridad: **SAST**, **detección de secretos**, **configuración insegura** y **análisis de dependencias (SCA)**, diseñado con **Arquitectura Hexagonal** (Puertos y Adaptadores).
 
-VexCore es una herramienta modular, extensible y de alto rendimiento que no
-está fuertemente acoplada a sus interfaces de entrada ni a sus motores de
-análisis. Actualmente incluye soporte para proyectos en Django, JavaScript,
-PHP, y detección de dependencias Python con versiones vulnerables.
+Las reglas son archivos JSON incluidos en el paquete, el motor es extensible con plugins y la salida se integra en CI (JSON, SARIF y códigos de salida).
 
-## Características Principales
+## Características
 
-- **Arquitectura Hexagonal (Ports & Adapters):** Lógica de dominio pura
-  (`domain.py`) aislada de detalles de infraestructura.
-- **Análisis SAST:** Evaluador basado en reglas regex definidas en JSON.
-- **Análisis SCA:** Detección de dependencias Python con versiones vulnerables.
-  Soporta reglas locales y consulta en tiempo real a [OSV.dev](https://osv.dev)
-  (Google) con caché local de 24h.
-- **Detección de Secretos:** 14 patrones globales (AWS keys, GitHub tokens,
-  Slack webhooks, JWT secrets, Stripe, etc.).
-- **Soporte Multi-Lenguaje:**
-  - **Python/Django:** SQL crudo, `eval()`, `DEBUG=True`, `SECRET_KEY` expuestas.
-  - **JavaScript/React:** `dangerouslySetInnerHTML`, inyecciones al DOM,
-    credenciales hardcodeadas.
-  - **PHP:** LFI/RFI, inyección de comandos, SQLi por concatenación,
-    hashing débil.
-- **Crawler Eficiente (Lazy Evaluation):** Recorrido rápido de directorios
-  omitiendo carpetas innecesarias (`node_modules`, `.git`, `venv`) con
-  validación por tamaño y extensión.
-
-## Arquitectura del Sistema
-
-El proyecto sigue una arquitectura hexagonal con separación clara de
-responsabilidades:
-
-- **Dominio (`src/domain.py`):** Entidades `FileInfo`, `Finding`, `Report`.
-  Cero dependencias externas.
-- **Puertos (`src/ports.py`):** Interfaces abstractas `IAnalyzer` e `IReporter`.
-- **Adaptadores:**
-  - *Primarios (Driving):* CLI implementado en `src/main.py`.
-  - *Secundarios (Driven):* Crawler (`src/crawler.py`), Analizadores
-    (`src/analyzers/`), Reporter (`src/reporters/console.py`).
+- **SAST por regex** para Python/Django, JavaScript/TypeScript, PHP, Go, Java y Ruby.
+- **SAST por AST para Python**: detecta `eval()`, `exec()`, `os.system()`, `subprocess.*` y `pickle.load(s)` analizando el árbol sintáctico, así que no reacciona a menciones en comentarios o strings.
+- **Secretos**: AWS keys, tokens de GitHub, webhooks de Slack, claves de Stripe, JWT secrets, contraseñas hardcodeadas, etc.
+- **Configuración insegura**: `.env`, `docker-compose` y `settings.py` de Django (desactivado por defecto).
+- **SCA**: dependencias Python con versiones vulnerables, consultando [OSV.dev](https://osv.dev) con caché local de 24 h y reglas locales de respaldo (desactivado por defecto).
+- **Salidas**: consola con colores, JSON y SARIF (GitHub Code Scanning).
+- **CI-friendly**: código de salida `1` según severidad (`--fail-on`).
+- **Rendimiento**: análisis en paralelo, recorrido lazy del sistema de archivos y modo incremental.
+- **Supresiones** con `.vexcoreignore`, **plugins** propios y uso como **librería Python**.
+- **TUI** interactiva con [Textual](https://textual.textualize.io/).
 
 ## Requisitos
 
 - Python >= 3.11
-- Gestor de paquetes: `uv` (recomendado) o `pip`.
+- [`uv`](https://docs.astral.sh/uv/) (recomendado) o `pip`
 
 ## Instalación
 
 ```bash
 git clone https://github.com/elJulioDev/VexCore.git
-cd vexcore
+cd VexCore
 uv sync
 ```
 
 ## Uso
 
 ```bash
-# Escaneo básico de un directorio
+# Escaneo básico (desde el repo: uv run vexcore ...)
 vexcore ./mi_proyecto
 
-# Filtrar por severidad mínima (critical, high, medium, low, info)
+# Severidad mínima a reportar: critical, high, medium, low, info
 vexcore ./mi_proyecto --severity high
 
-# Usar un archivo de configuración personalizado
-vexcore ./mi_proyecto -c ./custom_config.yaml
+# Salida JSON o SARIF
+vexcore ./mi_proyecto --output json
+vexcore ./mi_proyecto --output sarif > vexcore.sarif
+
+# En CI: falla (exit 1) solo si hay hallazgos high o critical
+vexcore ./mi_proyecto --fail-on high
+
+# Solo re-escanear archivos modificados desde la última ejecución
+vexcore ./mi_proyecto --incremental
+
+# Interfaz interactiva
+vexcore --tui ./mi_proyecto
 ```
 
-### Configuración (`config.yaml`)
+| Opción | Descripción |
+|--------|-------------|
+| `target` | Directorio a escanear. |
+| `-c`, `--config` | Ruta a un `config.yaml` (ver [Configuración](#configuración)). |
+| `--severity` | Severidad mínima a reportar. Sobrescribe `output.severity_threshold`. |
+| `--output` | `console` (por defecto), `json` o `sarif`. |
+| `--fail-on` | Devuelve exit `1` si hay hallazgos de esta severidad o superior. Por defecto, igual a `--severity`. |
+| `--no-color` | Desactiva los colores. También se desactivan si la salida no es una terminal o si `NO_COLOR` está definido. |
+| `--incremental` | Usa una caché de hashes en `~/.vexcore/cache/` para analizar solo los archivos que cambiaron. |
+| `--tui` | Abre la interfaz interactiva. |
+
+**Códigos de salida:** `0` sin hallazgos por encima de `--fail-on`; `1` si los hay o si hay un error (directorio o config inválidos, reglas no encontradas).
+
+## Configuración
+
+VexCore busca la configuración en este orden y usa la primera que encuentra:
+
+1. La ruta indicada con `-c/--config`
+2. `config.yaml` en el directorio actual
+3. `~/.vexcore/config.yaml` (configuración global)
+4. Valores por defecto
 
 ```yaml
 crawler:
-  ignore_dirs:
-    - .git
-    - node_modules
-    - venv
-  scan_extensions:
-    - .py
-    - .php
-    - .js
-    - .tsx
+  # Si se omiten, se usan las listas por defecto de vexcore/crawler.py,
+  # que cubren todos los lenguajes con reglas. Si se definen, las REEMPLAZAN.
+  # ignore_dirs: [.git, node_modules, venv]
+  # scan_extensions: [.py, .js, .php]
   max_file_size_mb: 5
+  follow_symlinks: false
 
 analyzers:
   sast:
@@ -89,17 +90,21 @@ analyzers:
   secrets:
     enabled: true
   sca:
-    enabled: false       # Cambiar a true para activar SCA
-    source: both         # both (OSV+local), osv (solo API), local (solo JSON)
+    enabled: false
+    source: both      # both (OSV + local), osv (solo API), local (sin red)
+  config:
+    enabled: false
+
+plugins_dir: plugins
+incremental: false
 
 output:
   severity_threshold: low
 ```
 
-Las reglas vienen incluidas en el paquete (`vexcore/rules/`), así que
-VexCore funciona desde cualquier directorio. Para usar reglas propias,
-añade `rules_path` a un analizador; las rutas relativas se resuelven
-desde el directorio del `config.yaml`, no desde el directorio actual:
+### Reglas propias
+
+Las reglas vienen dentro del paquete (`vexcore/rules/`), así que VexCore funciona desde cualquier directorio. Para usar las tuyas, añade `rules_path` al analizador. Las rutas relativas (también `plugins_dir`) se resuelven **desde el directorio del `config.yaml`**, no desde el directorio actual:
 
 ```yaml
 analyzers:
@@ -107,21 +112,54 @@ analyzers:
     rules_path: mis-reglas/sast
 ```
 
-El análisis SCA está deshabilitado por defecto. Para activarlo, cambia
-`sca.enabled: false` a `sca.enabled: true` en `config.yaml`. Así se
-escanearán los archivos `requirements.txt` y `pyproject.toml` en busca
-de dependencias con versiones vulnerables.
+Si un analizador activado no encuentra su directorio de reglas, VexCore termina con un error en lugar de escanear sin reglas.
 
-La fuente de datos se configura con `source`:
+### SCA
 
-- **both** (default): consulta [OSV.dev](https://osv.dev) primero,
-  si falla la conexión usa las reglas locales (`vexcore/rules/sca/`)
-- **osv**: solo consulta online, ignora reglas locales
-- **local**: solo reglas locales, sin conexión a internet
+Con `sca.enabled: true` se analizan `requirements.txt`, `pyproject.toml`, `Pipfile`, `Pipfile.lock`, `setup.py` y `setup.cfg`. Las versiones se comparan semánticamente (no con regex) contra:
+
+- **both** (por defecto): [OSV.dev](https://osv.dev) y, si falla la conexión, las reglas locales (`vexcore/rules/sca/`).
+- **osv**: solo OSV.dev.
+- **local**: solo las reglas locales, sin acceso a internet.
+
+Las respuestas de OSV se guardan en `~/.cache/vexcore/osv/` durante 24 h. Más detalles en [`docs/osv.md`](docs/osv.md).
+
+### Supresiones (`.vexcoreignore`)
+
+Crea un `.vexcoreignore` en la raíz del directorio escaneado. Una entrada por línea; `#` para comentarios:
+
+```
+# Suprimir una regla en todo el proyecto
+DJG001
+
+# Suprimir archivos por ruta relativa (patrones fnmatch)
+tests/*.py
+*/generated/*
+```
 
 ## Reglas
 
-### Formato de reglas SAST y Secrets
+**74 reglas** en 11 archivos:
+
+| Archivo | IDs | Reglas | Categoría |
+|---------|-----|-------:|-----------|
+| `sast/django.json` | DJG001–DJG005 | 5 | SAST Python/Django |
+| `sast/js.json` | JS001–JS006 | 6 | SAST JavaScript/TypeScript (`.js`, `.jsx`, `.ts`, `.tsx`, `.html`) |
+| `sast/php.json` | PHP001–PHP013 | 13 | SAST PHP |
+| `sast/go.json` | GOO001–GOO005 | 5 | SAST Go |
+| `sast/java.json` | JAV001–JAV005 | 5 | SAST Java |
+| `sast/ruby.json` | RBY001–RBY004 | 4 | SAST Ruby |
+| `secrets/generic.json` | SEC001–SEC016 | 16 | Secretos (cualquier archivo) |
+| `config/env.json` | CFG001–CFG004 | 4 | Configuración `.env` |
+| `config/docker.json` | CFG005–CFG007 | 3 | Configuración docker-compose |
+| `config/django_settings.json` | CFG008–CFG010 | 3 | Configuración Django |
+| `sca/pypi.json` | PYA001–PYA010 | 10 | SCA PyPI |
+
+Además, el analizador AST de Python (siempre activo) detecta `eval()`, `exec()`, `os.system()`, `subprocess.call/run/Popen` y `pickle.load/loads`.
+
+Documentación con ejemplos de código vulnerable y su corrección: [`docs/python.md`](docs/python.md) (DJG + PYA). La documentación de PHP y JS ([`docs/php.md`](docs/php.md)) está pendiente.
+
+### Formato: SAST, secretos y configuración
 
 ```json
 {
@@ -129,19 +167,19 @@ La fuente de datos se configura con `source`:
   "title": "SQL crudo con interpolación",
   "severity": "high",
   "extensions": [".py"],
-  "pattern": "\\\\.raw\\\\s*\\\\(.*(%s|%d|\\\\.format\\\\(|f['\\\"])"
+  "pattern": "\\.raw\\s*\\(.*(%s|%d|\\.format\\(|f['\"])"
 }
 ```
 
 | Campo | Descripción |
 |-------|-------------|
-| `id` | Identificador único (prefijo por lenguaje) |
-| `title` | Descripción corta de la vulnerabilidad |
-| `severity` | critical, high, medium, low, info |
-| `extensions` | Extensiones donde aplica (vacío = todos los archivos) |
-| `pattern` | Expresión regular Python a buscar en cada línea |
+| `id` | Identificador único: 3 letras + 3 dígitos (ej. `DJG001`). |
+| `title` | Descripción corta. |
+| `severity` | `critical`, `high`, `medium`, `low` o `info`. |
+| `extensions` | Extensiones a las que aplica (vacío = todas). Deben estar en `scan_extensions`. |
+| `pattern` | Expresión regular de Python que se evalúa línea a línea. |
 
-### Formato de reglas SCA
+### Formato: SCA
 
 ```json
 {
@@ -153,59 +191,90 @@ La fuente de datos se configura con `source`:
 }
 ```
 
-A diferencia de SAST, SCA no busca patrones en el código sino que
-compara la **versión** de cada dependencia extraída del manifest contra
-una restricción semántica (`<3.2.25`, `>=1.0,<2.0`, etc.).
+`version_constraint` admite restricciones como `<3.2.25` o `>=1.0,<2.0`.
 
-### Reglas disponibles
+> Los archivos JSON inválidos o las reglas con un patrón incorrecto se omiten.
 
-| Archivo | ID | Cantidad | Categoría |
-|---------|----|----------|-----------|
-| `vexcore/rules/sast/django.json` | DJG001–005 | 5 | SAST Python/Django |
-| `vexcore/rules/sast/php.json` | PHP001–007 | 7 | SAST PHP |
-| `vexcore/rules/sast/js.json` | JS001–006 | 6 | SAST JavaScript/React |
-| `vexcore/rules/secrets/generic.json` | SEC001–014 | 14 | Secretos (agnóstico) |
-| `vexcore/rules/sca/pypi.json` | PYA001–010 | 10 | SCA PyPI |
+## Extensibilidad
 
-Ver documentación detallada con ejemplos de código vulnerable y cómo
-corregirlo en:
+### Plugins
 
-- [`docs/python.md`](docs/python.md) — reglas Python (DJG + PYA)
-- [`docs/php.md`](docs/php.md) — reglas PHP y JS (para tu compañero)
-
-## Estructura del Proyecto
+Cada subdirectorio de `plugins_dir` es un plugin:
 
 ```
-vexcore/
-├── config.yaml             # Configuración principal
-├── pyproject.toml          # Metadatos y dependencias
-├── docs/                   # Documentación detallada de reglas
-│   ├── python.md           #   Reglas Python (SAST + SCA)
-│   └── php.md              #   Reglas PHP y JS
-└── vexcore/                # Paquete Python
-    ├── rules/              # Reglas en formato JSON (incluidas en el paquete)
-    │   ├── sast/           #   django, go, java, js, php, ruby
-    │   ├── secrets/        #   generic.json
-    │   ├── config/         #   django_settings, docker, env
-    │   └── sca/            #   pypi.json
-    ├── analyzers/          # Motores de análisis
-    │   ├── _loader.py      #   Carga de reglas JSON
-    │   ├── _regex.py       #   Engine regex compartido
-    │   ├── osv.py          #   Cliente OSV.dev (cache + API)
-    │   ├── sast.py         #   Adaptador SAST
-    │   ├── secrets.py      #   Adaptador de secretos
-    │   └── sca.py          #   Adaptador SCA (PyPI)
-    ├── reporters/          # Salida de resultados
-    │   └── console.py      #   Reporte con colores ANSI
-    ├── utils/              # Utilidades
-    │   └── config_loader.py#   Carga de config.yaml
-    ├── crawler.py          # Recorrido del sistema de archivos
-    ├── domain.py           # Entidades de negocio
-    ├── engine.py           # Orquestador
-    ├── main.py             # Punto de entrada CLI
-    └── ports.py            # Puertos (IAnalyzer, IReporter)
+plugins/
+└── mi_analyzer/
+    ├── plugin.json      # {"id": "mi_analyzer", "module": "analyzer", "class": "Analyzer"}
+    └── analyzer.py      # define una clase que implementa IAnalyzer
 ```
+
+`class` es opcional (por defecto `Analyzer`). La clase debe heredar de `vexcore.ports.IAnalyzer` e implementar `analyze(file: FileInfo) -> list[Finding]`. Los plugins inválidos se omiten con un aviso.
+
+### Uso como librería
+
+```python
+import vexcore
+
+report = vexcore.scan("./mi_proyecto")  # config: igual que la CLI
+print(report.total)
+for finding in report.findings:
+    print(finding.rule_id, finding.file.relative, finding.line)
+```
+
+`vexcore.scan()` ejecuta los analizadores SAST, de secretos y AST. Los de SCA, configuración y los plugins solo se ejecutan desde la CLI.
+
+## Arquitectura
+
+| Capa | Ubicación |
+|------|-----------|
+| Dominio | `vexcore/domain.py`: `Severity`, `Category`, `Rule`, `FileInfo`, `Finding`, `Report`. Sin dependencias externas. |
+| Puertos | `vexcore/ports.py`: `IAnalyzer`, `IReporter`. |
+| Adaptadores de entrada | CLI (`vexcore/main.py`), TUI (`vexcore/tui/`) y librería (`vexcore/__init__.py`). |
+| Adaptadores de salida | Crawler (`crawler.py`), analizadores (`analyzers/`), reporters (`reporters/`), caché (`cache.py`). |
+| Orquestación | `vexcore/engine.py`: analiza en paralelo, aplica supresiones y deduplica (misma línea y categoría → se conserva la mayor severidad). |
+
+```
+VexCore/
+├── config.yaml                 # Configuración por defecto
+├── pyproject.toml
+├── docs/                       # Documentación de reglas y OSV
+├── tests/
+├── .github/workflows/          # CI y escaneo con Code Scanning
+└── vexcore/
+    ├── rules/                  # Reglas JSON (incluidas en el paquete)
+    │   ├── sast/  secrets/  config/  sca/
+    ├── analyzers/
+    │   ├── _loader.py          # Carga de reglas JSON
+    │   ├── _regex.py           # Motor regex compartido
+    │   ├── sast.py  secrets.py  config.py
+    │   ├── ast_analyzer.py     # Análisis AST de Python
+    │   ├── sca.py              # Análisis de dependencias
+    │   └── osv.py              # Cliente OSV.dev (caché + API)
+    ├── reporters/              # console.py, json.py, sarif.py
+    ├── tui/                    # Interfaz Textual
+    ├── utils/config_loader.py  # config.yaml → AppConfig
+    ├── cache.py  crawler.py  domain.py  engine.py
+    ├── main.py  plugins.py  ports.py  suppressions.py
+    └── __init__.py             # API de librería: vexcore.scan()
+```
+
+## Desarrollo
+
+```bash
+uv sync                 # instala dependencias, incluidas las de desarrollo
+uv run pytest           # tests
+uv run ruff check .     # lint
+```
+
+El CI (`.github/workflows/`) ejecuta en cada PR:
+
+- **Lint** con ruff.
+- **Tests** en Python 3.11, 3.12, 3.13 y 3.14.
+- **Build del wheel** y prueba del paquete instalado desde fuera del repo.
+- **Escaneo del propio repo con VexCore**, que sube el resultado a GitHub Code Scanning. El check `vexcore` falla si el PR introduce alertas nuevas; si un test necesita un secreto de ejemplo, constrúyelo de forma que la línea del código fuente no coincida con la regla.
 
 ## Dependencias
 
-- `PyYAML >= 6.0.3` — carga de configuración YAML
+- [`PyYAML`](https://pyyaml.org/) — lectura de `config.yaml`
+- [`Textual`](https://textual.textualize.io/) — interfaz TUI
+- Desarrollo: `pytest`, `ruff`
