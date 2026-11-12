@@ -5,7 +5,6 @@ import json
 import os
 import subprocess
 import sys
-from pathlib import Path
 import pytest
 from vexcore.utils.config_loader import BUILTIN_RULES_DIR, load_config
 

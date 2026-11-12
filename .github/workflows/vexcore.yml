@@ -2,30 +2,45 @@ name: VexCore SAST Scan
 
 on:
   push:
-    branches: ["**"]
+    branches: [main, development]
   pull_request:
-    branches: ["**"]
+  workflow_dispatch:
 
 permissions:
   contents: read
-  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
 
-      - run: uv sync
+      - run: uv sync --locked
 
+      # Findings make vexcore exit 1; that must not block the SARIF upload.
+      # Gating happens in Code Scanning ("vexcore" check on PRs), not here.
       - name: Run VexCore
         run: uv run vexcore . --output sarif > sarif.json
         continue-on-error: true
 
+      - name: Validate SARIF
+        run: python3 -c "import json; d = json.load(open('sarif.json')); assert d.get('runs'), 'empty SARIF'"
+
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
         with:
           sarif_file: sarif.json

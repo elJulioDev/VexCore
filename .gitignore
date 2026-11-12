@@ -8,3 +8,4 @@ env/
 AGENTS.md
 CLAUDE.md
 graphify-out/
+dist/

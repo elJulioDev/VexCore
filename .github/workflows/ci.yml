@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to the same branch/PR cancels the run that is still in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check --output-format=github .
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest -v
+
+  package:
+    name: Build & smoke-test wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+      - run: uv build
+      - name: Wheel ships the rule files
+        run: |
+          count=$(python3 -m zipfile -l dist/*.whl | grep -c 'vexcore/rules/.*\.json' || true)
+          echo "Rule files in wheel: $count"
+          test "$count" -gt 0
+      - name: Installed wheel finds issues from outside the repo
+        run: |
+          wheel=$(ls "$PWD"/dist/*.whl)
+          work=$(mktemp -d)
+          mkdir "$work/proj"
+          # Built at runtime so this workflow file does not trip the secrets rules.
+          printf '%s%s\n' 'pass' 'word = "hunter2secret"' > "$work/proj/app.py"
+          cd "$work"
+          set +e
+          uvx --isolated --from "$wheel" vexcore proj --output json > out.json
+          code=$?
+          set -e
+          cat out.json
+          # Exit 1 means findings at or above the threshold, which is what we expect.
+          test "$code" -eq 1
+          python3 -c "import json, sys; f = json.load(open('out.json'))['findings']; sys.exit(0 if f else 'no findings: rules were not loaded')"
