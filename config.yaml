@@ -1,32 +1,11 @@
 crawler:
-  ignore_dirs:
-    - .git
-    - __pycache__
-    - venv
-    - .venv
-    - env
-    - node_modules
-    - dist
-    - build
-    - vendor
-    - .idea
-    - .vscode
-    - migrations
-  scan_extensions:
-    - .py
-    - .php
-    - .html
-    - .js
-    - .ts
-    - .env
-    - .yaml
-    - .yml
-    - .json
-    - .toml
-    - .sh
-    - .txt
-    - .lock
-    - .xml
+  # ignore_dirs y scan_extensions usan por defecto las listas de
+  # vexcore/crawler.py (DEFAULT_IGNORE_DIRS / DEFAULT_SCAN_EXTENSIONS), que
+  # cubren todos los lenguajes con reglas. Si las defines aquí, REEMPLAZAN
+  # a las de por defecto (no se suman):
+  #
+  # ignore_dirs: [.git, node_modules, venv]
+  # scan_extensions: [.py, .js, .php]
   max_file_size_mb: 5
   follow_symlinks: false
 
