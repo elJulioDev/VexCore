@@ -1,6 +1,7 @@
 """End-to-end checks of the vexcore CLI."""
 
 from __future__ import annotations
+import json
 import os
 import subprocess
 import sys
@@ -35,3 +36,18 @@ def test_invalid_target_exits_with_error(tmp_path):
     result = _run(tmp_path / "missing")
     assert result.returncode == 1
     assert "[ERROR]" in result.stderr
+
+
+def test_env_file_triggers_config_rules(tmp_path):
+    # Literal dividido para no disparar reglas al autoescanear el repo.
+    (tmp_path / ".env").write_text(
+        "SECRET_" "KEY=insecure_production_secret_key\n", encoding="utf-8"
+    )
+    cfg = tmp_path / "vexcore-config.yaml"
+    cfg.write_text("analyzers:\n  config:\n    enabled: true\n", encoding="utf-8")
+
+    result = _run(tmp_path, "-c", cfg, "--output", "json", "--fail-on", "critical")
+
+    assert result.returncode == 1, result.stderr
+    ids = [f["rule_id"] for f in json.loads(result.stdout)["findings"]]
+    assert "CFG001" in ids

@@ -102,6 +102,10 @@ output:
   severity_threshold: low
 ```
 
+El crawler acepta `.env` como nombre de archivo y trata `.env.local`,
+`.env.production`, etc. como `.env`. Las plantillas `.env.example`,
+`.env.sample`, `.env.template` y `.env.dist` se omiten.
+
 ### Reglas propias
 
 Las reglas vienen dentro del paquete (`vexcore/rules/`), así que VexCore funciona desde cualquier directorio. Para usar las tuyas, añade `rules_path` al analizador. Las rutas relativas (también `plugins_dir`) se resuelven **desde el directorio del `config.yaml`**, no desde el directorio actual:

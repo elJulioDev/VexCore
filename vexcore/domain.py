@@ -43,7 +43,10 @@ class Rule:
 
 @dataclass(frozen=True, slots=True)
 class FileInfo:
-    """Snapshot inmutable de un archivo listo para analizar."""
+    """Snapshot inmutable de un archivo listo para analizar.
+
+    `extension` es el token de scan: ".env.local" se reporta como ".env".
+    """
     absolute:   Path
     relative:   Path
     extension:  str
