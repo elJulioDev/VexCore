@@ -18,3 +18,32 @@ def test_walk_filtra_dirs_y_extensiones(tmp_path):
     assert "src/app.py" in rel
     assert "node_modules/dep.js" not in rel
     assert "src/not_text.bin" not in rel
+
+def test_walk_incluye_env_y_variantes(tmp_path):
+    for name in (".env", ".env.local", ".env.production"):
+        (tmp_path / name).write_text("x", encoding="utf-8")
+    for name in (
+        ".env.example", ".env.local.example", ".env.sample",
+        ".env.template", ".env.dist", ".gitignore",
+    ):
+        (tmp_path / name).write_text("x", encoding="utf-8")
+
+    files = {str(f.relative): f.extension for f in Crawler(root=tmp_path).walk()}
+
+    assert files == {
+        ".env": ".env",
+        ".env.local": ".env",
+        ".env.production": ".env",
+    }
+
+
+def test_walk_normaliza_tokens_configurados(tmp_path):
+    (tmp_path / "Dockerfile").write_text("FROM python:3.12", encoding="utf-8")
+    (tmp_path / ".ENV").write_text("x", encoding="utf-8")
+
+    files = {
+        str(f.relative): f.extension
+        for f in Crawler(root=tmp_path, scan_extensions=["Dockerfile", ".ENV"]).walk()
+    }
+
+    assert files == {"Dockerfile": "dockerfile", ".ENV": ".env"}

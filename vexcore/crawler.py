@@ -26,6 +26,9 @@ DEFAULT_SCAN_EXTENSIONS: frozenset[str] = frozenset({
     ".txt", ".lock", ".xml",
 })
 
+# Plantillas de dotfiles (.env.example, .env.sample...): no traen credenciales reales.
+_TEMPLATE_SUFFIXES: tuple[str, ...] = (".example", ".sample", ".template", ".dist")
+
 MAX_FILE_SIZE_BYTES: int = 5 * 1024 * 1024  # 5 MB — descarta binarios disfrazados
 
 class Crawler:
@@ -44,9 +47,8 @@ class Crawler:
         self.ignore_dirs: Set[str] = (
             set(ignore_dirs) if ignore_dirs is not None else set(DEFAULT_IGNORE_DIRS)
         )
-        self.scan_extensions: Set[str] = (
-            set(scan_extensions) if scan_extensions is not None else set(DEFAULT_SCAN_EXTENSIONS)
-        )
+        tokens = scan_extensions if scan_extensions is not None else DEFAULT_SCAN_EXTENSIONS
+        self.scan_extensions: Set[str] = {token.lower() for token in tokens}
         self.max_file_size: int = max_file_size
         self.follow_symlinks: bool = follow_symlinks
         self._visited: int = 0
@@ -89,14 +91,32 @@ class Crawler:
             "total":   self._visited + self._skipped,
         }
 
+    def _matching_extension(self, path: Path) -> str | None:
+        """Return the scan token that enables the file, or None if skipped."""
+        ext = path.suffix.lower()
+        if ext in self.scan_extensions:
+            return ext
+
+        name = path.name.lower()
+        if name in self.scan_extensions:
+            return name
+
+        # Path(".env").suffix es ""; las variantes se resuelven por el primer segmento.
+        if name.startswith(".") and not name.endswith(_TEMPLATE_SUFFIXES):
+            token = "." + name[1:].split(".", 1)[0]
+            if token in self.scan_extensions:
+                return token
+
+        return None
+
     def _evaluate(self, path: Path) -> FileInfo | None:
         """Retorna FileInfo si el archivo pasa todos los filtros, None si se descarta."""
         try:
             if path.is_symlink() and not self.follow_symlinks:
                 return None
 
-            ext = path.suffix.lower()
-            if ext not in self.scan_extensions:
+            ext = self._matching_extension(path)
+            if ext is None:
                 return None
 
             size = path.stat().st_size
